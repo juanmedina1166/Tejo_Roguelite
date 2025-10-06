@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac6c678bcb5274e80a42c5f8eec2af, type: 3}
   m_Name: NuevaHabilidad
   m_EditorClassIdentifier: 
-  nombre: 
+  nombre: Tejo de Plomo
   descripcion: 
   icono: {fileID: 0}
   trigger: 0

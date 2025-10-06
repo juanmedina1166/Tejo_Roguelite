@@ -1,16 +1,27 @@
+using System;
 using UnityEngine;
 
-public class GameEvents : MonoBehaviour
+public static class GameEvents
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    // Define un evento para cuando un enemigo es derrotado
+    public static event Action OnTurnStarted;
+    public static void TriggerTurnStarted() => OnTurnStarted?.Invoke();
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public static event Action OnRoundEnded;
+    public static void TriggerRoundEnded() => OnRoundEnded?.Invoke();
+
+    // Evento de Lanzamiento
+    public static event Action<GameObject> OnTejoThrown; // Pasamos el tejo que fue lanzado
+    public static void TriggerTejoThrown(GameObject tejoInstance) => OnTejoThrown?.Invoke(tejoInstance);
+
+    // Eventos de Puntuación (pasamos los puntos base)
+    public static event Action<int> OnMechaExplodes;
+    public static void TriggerMechaExplodes(int basePoints) => OnMechaExplodes?.Invoke(basePoints);
+
+    public static event Action<int> OnEmbocinada;
+    public static void TriggerEmbocinada(int basePoints) => OnEmbocinada?.Invoke(basePoints);
+
+    // ... y así sucesivamente para Moñona, Mano, etc.
+
+    // ... ¡Crea todos los eventos que necesites para tus triggers!
 }
