@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class TurnManager : MonoBehaviour
@@ -6,8 +7,14 @@ public class TurnManager : MonoBehaviour
     public static TurnManager instance;
 
     [SerializeField]
-    private int numJugadores = 4;
-    private int jugadorActual = 1; // Empezamos con el Jugador 1
+    private int numJugadores = 2; // Ahora solo Humano y IA
+    private int jugadorActual = 1; // 1 = Humano, 2 = IA
+
+    /// <summary>
+    /// Evento que se dispara cuando cambia el turno.
+    /// Recibe el número de jugador actual (1-based).
+    /// </summary>
+    public event Action<int> OnTurnChanged;
 
     void Awake()
     {
@@ -22,8 +29,14 @@ public class TurnManager : MonoBehaviour
         }
     }
 
+    // Anunciamos el turno inicial para que quien esté suscrito (IA, UI...) reciba el estado.
+    void Start()
+    {
+        OnTurnChanged?.Invoke(jugadorActual);
+    }
+
     /// <summary>
-    /// Devuelve el número del jugador actual (1, 2, 3, o 4).
+    /// Devuelve el número del jugador actual (1 o 2).
     /// </summary>
     public int CurrentTurn()
     {
@@ -31,7 +44,48 @@ public class TurnManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Pasa al siguiente turno.
+    /// Devuelve el índice del jugador actual en base cero (0 o 1).
+    /// Útil para acceder a arrays como puntajes[].
+    /// </summary>
+    public int CurrentPlayerIndex()
+    {
+        return Mathf.Clamp(jugadorActual - 1, 0, numJugadores - 1);
+    }
+
+    /// <summary>
+    /// Indica si es el turno de la IA.
+    /// </summary>
+    public bool IsAITurn()
+    {
+        return jugadorActual == 2;
+    }
+
+    /// <summary>
+    /// Indica si es el turno del jugador humano.
+    /// </summary>
+    public bool IsHumanTurn()
+    {
+        return jugadorActual == 1;
+    }
+
+    /// <summary>
+    /// Forzar un turno específico (1-based). Dispara el evento OnTurnChanged.
+    /// </summary>
+    public void SetTurn(int jugador)
+    {
+        if (jugador < 1 || jugador > numJugadores)
+        {
+            Debug.LogWarning($"TurnManager: intento de SetTurn inválido: {jugador}");
+            return;
+        }
+
+        jugadorActual = jugador;
+        Debug.Log($"Turno forzado al Jugador {jugadorActual}");
+        OnTurnChanged?.Invoke(jugadorActual);
+    }
+
+    /// <summary>
+    /// Pasa al siguiente turno. Alterna entre 1 y 2.
     /// </summary>
     public void NextTurn()
     {
@@ -40,6 +94,8 @@ public class TurnManager : MonoBehaviour
         {
             jugadorActual = 1; // Vuelve al primer jugador
         }
+
         Debug.Log($"Turno del Jugador {jugadorActual}");
+        OnTurnChanged?.Invoke(jugadorActual);
     }
 }

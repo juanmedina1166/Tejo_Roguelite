@@ -25,6 +25,9 @@ public class ControlJugador : MonoBehaviour
 
     void Update()
     {
+        // Solo permitimos input si es el turno humano
+        if (TurnManager.instance == null || !TurnManager.instance.IsHumanTurn()) return;
+
         // Si no podemos lanzar, no hacemos nada.
         if (!puedeLanzar) return;
 
@@ -38,9 +41,8 @@ public class ControlJugador : MonoBehaviour
     private void LanzarTejo()
     {
         // --- Paso 1: Calcular la Dirección con Raycasting ---
-        // Creamos un "rayo" invisible desde la cámara, que pasa a través de la posición del mouse
         Ray rayo = mainCamera.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hitInfo; // Variable para guardar la información de la colisión del rayo
+        RaycastHit hitInfo;
 
         // Lanzamos el rayo y comprobamos si choca con algo en la escena
         if (Physics.Raycast(rayo, out hitInfo))
@@ -66,6 +68,15 @@ public class ControlJugador : MonoBehaviour
             {
                 // Le pasamos todos los datos al script del tejo para que aplique la física
                 tejoActual.Iniciar(puntoDeLanzamiento.position, direccionDeLanzamiento, fuerza);
+
+                // Si el prefab tiene el componente Tejo, activamos la detección de parada
+                Tejo tejoComp = tejoActual.GetComponent<Tejo>();
+                if (tejoComp != null)
+                    tejoComp.ActivarDeteccion();
+
+                // Registramos el lanzamiento en el GameManager para que controle el cambio de turno
+                if (GameManagerTejo.instance != null)
+                    GameManagerTejo.instance.RegistrarTejoLanzado();
 
                 // Marcamos el tejo como "lanzado" para que no podamos controlarlo más
                 tejoActual = null;

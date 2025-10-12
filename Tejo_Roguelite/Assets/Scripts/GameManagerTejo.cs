@@ -84,11 +84,16 @@ public class GameManagerTejo : MonoBehaviour
     public void RegistrarTejoLanzado()
     {
         tirosRealizados++;
-        if (tirosRealizados >= maxTiros)
-        {
-            if (blocker != null) blocker.SetActive(true);
-            esperandoCambioTurno = true;
-        }
+
+        // Para este flujo inicial queremos cambiar de turno después de cada tejo.
+        // Marcamos que estamos esperando el fin del movimiento para cambiar turno.
+        esperandoCambioTurno = true;
+
+        // Bloqueamos input mientras se resuelve este tejo
+        if (blocker != null) blocker.SetActive(true);
+
+        // Si quieres mantener la lógica anterior basada en maxTiros, puedes combinar condiciones.
+        // Por ahora evitamos que el cambio dependa de acumular varios tiros.
     }
 
     public void TejoTermino(Tejo tejo)
