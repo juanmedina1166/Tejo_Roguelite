@@ -6,21 +6,22 @@ public class AIController : MonoBehaviour
     [Header("Referencias")]
     public LanzamientoTejo tejoPrefab;
     public Transform puntoDeLanzamiento;
+    public Transform objetivoCentral;
     public CentroController centroController;
 
+    [Header("Parámetros de tablero")]
+    public Vector2 tamañoTablero = new Vector2(6f, 6f);
+
     [Header("Parámetros de lanzamiento")]
-    [Tooltip("Componente vertical objetivo (igual que ControlJugador)")]
-    public float alturaDelArco = 0.8f;
-    [Tooltip("Multiplicador de fuerza (igual que ControlJugador)")]
-    public float multiplicadorDeFuerza = 60f;
-    [Tooltip("Fuerza aleatoria como porcentaje (0..1) del máximo")]
-    public Vector2 rangoFuerzaPercent = new Vector2(0.6f, 0.95f);
+    public float alturaExtra = 1.5f; // Altura máxima de la parábola
+    public float multiplicadorDeFuerza = 60f; // ya no es crítico para la IA balística, se puede ajustar
+    public Vector2 rangoFuerzaPercent = new Vector2(0.9f, 1.1f); // aplicable como variación sobre la velocidad
 
     [Header("Comportamiento")]
-    [Tooltip("Retraso antes de que la IA lance (simula pensar)")]
     public float decisionDelay = 1.0f;
-    [Tooltip("Radio de dispersión alrededor del centro para apuntar")]
-    public float radioAproximacion = 1.5f;
+    [Range(0f, 1f)]
+    public float chanceFallar = 0.15f;
+    public float missFactorMin = 1.2f, missFactorMax = 2.0f;
 
     bool lanzando = false;
 
@@ -40,14 +41,10 @@ public class AIController : MonoBehaviour
         if (TurnManager.instance != null)
         {
             TurnManager.instance.OnTurnChanged += OnTurnChanged;
-            Debug.Log("AIController: suscrito a TurnManager.OnTurnChanged");
-
-            // Reaccionar inmediatamente al turno actual por si TurnManager ya lo anunció
             OnTurnChanged(TurnManager.instance.CurrentTurn());
         }
         else
         {
-            // Si TurnManager no está listo aún, lo esperamos y lo intentamos de nuevo.
             StartCoroutine(WaitAndSubscribe());
         }
     }
@@ -58,16 +55,11 @@ public class AIController : MonoBehaviour
             yield return null;
 
         TurnManager.instance.OnTurnChanged += OnTurnChanged;
-        Debug.Log("AIController: suscrito a TurnManager.OnTurnChanged (después de esperar)");
-
-        // Reaccionar inmediatamente al turno actual en cuanto estemos suscritos
         OnTurnChanged(TurnManager.instance.CurrentTurn());
     }
 
     void OnTurnChanged(int jugador)
     {
-        Debug.Log($"AIController: OnTurnChanged recibido para jugador {jugador}");
-        // Si es el turno de la IA y no estamos ya lanzando, iniciamos la rutina.
         if (jugador == 2 && !lanzando)
         {
             StartCoroutine(RealizarLanzamientoIA());
@@ -77,54 +69,94 @@ public class AIController : MonoBehaviour
     IEnumerator RealizarLanzamientoIA()
     {
         lanzando = true;
-
-        // Pequeña espera para simular "pensar"
         yield return new WaitForSeconds(decisionDelay);
 
         if (tejoPrefab == null || puntoDeLanzamiento == null)
         {
-            Debug.LogWarning("AIController: faltan referencias (tejoPrefab o puntoDeLanzamiento).");
             lanzando = false;
             yield break;
         }
 
-        // Determinar objetivo: si hay CentroController usar su posición y añadir ruido
-        Vector3 objetivo;
-        if (centroController != null)
+        // Determinar la posición base del centro del tablero
+        Vector3 centroPos;
+        if (objetivoCentral != null)
         {
-            Vector3 basePos = centroController.transform.position;
-            Vector2 ruido = Random.insideUnitCircle * radioAproximacion;
-            objetivo = new Vector3(basePos.x + ruido.x, puntoDeLanzamiento.position.y, basePos.z + ruido.y);
+            centroPos = objetivoCentral.position;
+        }
+        else if (centroController != null)
+        {
+            centroPos = centroController.transform.position;
         }
         else
         {
-            // Si no hay centro, lanzamos hacia delante con algo de variación
-            objetivo = puntoDeLanzamiento.position + puntoDeLanzamiento.forward * 5f;
-            objetivo += new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f));
+            centroPos = puntoDeLanzamiento.position + puntoDeLanzamiento.forward * 5f;
         }
 
-        // Calcular dirección y fuerza (misma lógica que ControlJugador)
-        Vector3 direccion = objetivo - puntoDeLanzamiento.position;
-        Vector3 direccionDeLanzamiento = new Vector3(direccion.x, 0, direccion.z).normalized;
-        direccionDeLanzamiento.y = alturaDelArco;
+        // Elegir objetivo dentro del tablero
+        Vector2 half = tamañoTablero * 0.5f;
+        Vector2 offset2D = Random.insideUnitCircle;
+        Vector3 objetivo = new Vector3(
+            centroPos.x + offset2D.x * half.x,
+            puntoDeLanzamiento.position.y,
+            centroPos.z + offset2D.y * half.y
+        );
 
-        float percent = Random.Range(rangoFuerzaPercent.x, rangoFuerzaPercent.y);
-        float fuerza = percent * multiplicadorDeFuerza;
+        bool fallo = Random.value < chanceFallar;
+        if (fallo)
+        {
+            float missFactor = Random.Range(missFactorMin, missFactorMax);
+            Vector2 dirExterior = Random.insideUnitCircle.normalized;
+            objetivo = new Vector3(
+                centroPos.x + dirExterior.x * Mathf.Max(half.x, half.y) * missFactor,
+                puntoDeLanzamiento.position.y,
+                centroPos.z + dirExterior.y * Mathf.Max(half.x, half.y) * missFactor
+            );
+        }
 
-        // Instanciar y lanzar
+        // --- Lanzamiento parabólico: calculamos la velocidad inicial exacta ---
+        Vector3 velocidadInicial = CalcularLanzamientoParabolico(puntoDeLanzamiento.position, objetivo, alturaExtra, Physics.gravity.y);
+
+        // Aplicamos una ligera variación aleatoria sobre la magnitud para simular imprecisión
+        float variacion = Random.Range(rangoFuerzaPercent.x, rangoFuerzaPercent.y);
+        velocidadInicial *= variacion;
+
+        // Instanciar y fijar la velocidad directamente (evita problemas con la masa y ForceMode)
         LanzamientoTejo instancia = Instantiate(tejoPrefab, puntoDeLanzamiento.position, puntoDeLanzamiento.rotation);
-        instancia.Iniciar(puntoDeLanzamiento.position, direccionDeLanzamiento, fuerza);
+        instancia.IniciarConVelocidad(puntoDeLanzamiento.position, velocidadInicial);
 
-        // Registrar el lanzamiento en el GameManager (si existe)
         if (GameManagerTejo.instance != null)
             GameManagerTejo.instance.RegistrarTejoLanzado();
 
-        // Si el prefab tiene un componente Tejo, activamos la detección de parada
         Tejo tejoComp = instancia.GetComponent<Tejo>();
         if (tejoComp != null)
             tejoComp.ActivarDeteccion();
 
-        // Fin del lanzamiento; permitimos que el sistema continúe cuando corresponda.
         lanzando = false;
+    }
+
+    // Calcula la velocidad inicial necesaria para que un objeto lanzado desde 'origen' llegue a 'destino'
+    // alcanzando aproximadamente 'alturaMax' en la curva. gravedad debe ser negativo (Physics.gravity.y).
+    Vector3 CalcularLanzamientoParabolico(Vector3 origen, Vector3 destino, float alturaMax, float gravedad)
+    {
+        Vector3 desplazamiento = destino - origen;
+        Vector3 desplazamientoXZ = new Vector3(desplazamiento.x, 0, desplazamiento.z);
+        float distancia = desplazamientoXZ.magnitude;
+
+        float altura = destino.y - origen.y;
+        float h = Mathf.Max(alturaMax, altura + 0.1f);
+
+        // Tiempos de subida y bajada
+        float tiempoSubida = Mathf.Sqrt(2 * h / -gravedad);
+        float tiempoBajada = Mathf.Sqrt(2 * Mathf.Abs(h - altura) / -gravedad);
+        float tiempoTotal = tiempoSubida + tiempoBajada;
+
+        // Velocidad horizontal necesaria
+        Vector3 velocidadXZ = desplazamientoXZ / tiempoTotal;
+
+        // Velocidad vertical inicial
+        float velocidadY = Mathf.Sqrt(-2 * gravedad * h);
+
+        Vector3 resultado = velocidadXZ + Vector3.up * velocidadY;
+        return resultado;
     }
 }
