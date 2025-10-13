@@ -8,41 +8,66 @@ public class Tejo : MonoBehaviour
     private bool fueLanzado = false;
     private bool haTerminado = false;
 
+    // âœ… Nueva variable para indicar si puede lanzarse
+    public bool puedeLanzar = false;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }
 
-    // Usamos FixedUpdate para trabajar con físicas de forma consistente
     void FixedUpdate()
     {
-        // Si no ha sido lanzado o ya se detuvo, no hacemos nada
         if (!fueLanzado || haTerminado)
+            return;
+
+        // Si el tejo pasa de X = 100, se destruye y cambia de turno
+        if (transform.position.x > 100f)
         {
+            haTerminado = true;
+            Debug.Log("El tejo pasÃ³ de x=100 en la posiciÃ³n: " + transform.position);
+
+            if (GameManagerTejo.instance != null)
+                GameManagerTejo.instance.TejoTermino(this);
+
+            Destroy(gameObject);
             return;
         }
 
-        // La forma más fiable de saber si un objeto físico se detuvo
-        // es preguntar si está "durmiendo" (IsSleeping).
+        // Si el tejo se detuvo (estÃ¡ dormido)
         if (rb.IsSleeping())
         {
-            // Marcamos que ya terminó para no llamar al GameManager múltiples veces
             haTerminado = true;
+            Debug.Log("El tejo se ha detenido en la posiciÃ³n: " + transform.position);
 
-            Debug.Log("El tejo se ha detenido en la posición: " + transform.position);
-
-            // Le avisamos al GameManager que este tejo específico terminó su movimiento
             if (GameManagerTejo.instance != null)
-            {
                 GameManagerTejo.instance.TejoTermino(this);
-            }
+
+            Destroy(gameObject);
         }
     }
 
-    // Este método debe ser llamado justo después de que el tejo es lanzado
-    // para que empiece a comprobar si se ha detenido.
+    public void ResetTejo()
+    {
+        // Restablece su velocidad, rotaciÃ³n y cualquier estado previo
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // ðŸ”¹ Marca el tejo como listo para lanzar nuevamente
+        fueLanzado = false;
+        haTerminado = false;
+        puedeLanzar = true;
+
+        Debug.Log("ðŸ”„ Tejo reiniciado y listo para lanzar.");
+    }
+
+    // Este mÃ©todo se llama cuando el tejo realmente se lanza
     public void ActivarDeteccion()
     {
         fueLanzado = true;
+        puedeLanzar = false;
     }
 }

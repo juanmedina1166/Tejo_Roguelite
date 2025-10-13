@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class AIController : MonoBehaviour
@@ -6,16 +7,19 @@ public class AIController : MonoBehaviour
     [Header("Referencias")]
     public LanzamientoTejo tejoPrefab;
     public Transform puntoDeLanzamiento;
-    public Transform objetivoCentral;
-    public CentroController centroController;
+
+    [Header("Objetivos")]
+    [Tooltip("Lista de objetivos en el tablero. La IA elegirá uno al azar.")]
+    public List<Transform> objetivos = new List<Transform>();
+
+    private List<Transform> objetivosActivos = new List<Transform>();
 
     [Header("Parámetros de tablero")]
     public Vector2 tamañoTablero = new Vector2(6f, 6f);
 
     [Header("Parámetros de lanzamiento")]
-    public float alturaExtra = 1.5f; // Altura máxima de la parábola
-    public float multiplicadorDeFuerza = 60f; // ya no es crítico para la IA balística, se puede ajustar
-    public Vector2 rangoFuerzaPercent = new Vector2(0.9f, 1.1f); // aplicable como variación sobre la velocidad
+    public float alturaExtra = 1.5f;
+    public Vector2 rangoFuerzaPercent = new Vector2(0.9f, 1.1f);
 
     [Header("Comportamiento")]
     public float decisionDelay = 1.0f;
@@ -27,6 +31,7 @@ public class AIController : MonoBehaviour
 
     void OnEnable()
     {
+        RebuildActiveList();
         TrySubscribe();
     }
 
@@ -34,6 +39,18 @@ public class AIController : MonoBehaviour
     {
         if (TurnManager.instance != null)
             TurnManager.instance.OnTurnChanged -= OnTurnChanged;
+    }
+
+    void RebuildActiveList()
+    {
+        objetivosActivos.Clear();
+        if (objetivos == null) return;
+
+        foreach (var t in objetivos)
+        {
+            if (t != null)
+                objetivosActivos.Add(t);
+        }
     }
 
     void TrySubscribe()
@@ -77,53 +94,58 @@ public class AIController : MonoBehaviour
             yield break;
         }
 
-        // Determinar la posición base del centro del tablero
+        RebuildActiveList();
+
+        // --- Elegir objetivo ---
+        Transform elegido = null;
         Vector3 centroPos;
-        if (objetivoCentral != null)
+
+        if (objetivosActivos.Count > 0)
         {
-            centroPos = objetivoCentral.position;
-        }
-        else if (centroController != null)
-        {
-            centroPos = centroController.transform.position;
+            elegido = objetivosActivos[Random.Range(0, objetivosActivos.Count)];
+            centroPos = elegido.position;
+            Debug.Log($"AIController: Objetivo elegido '{elegido.name}' en {elegido.position}");
         }
         else
         {
             centroPos = puntoDeLanzamiento.position + puntoDeLanzamiento.forward * 5f;
+            Debug.Log("AIController: No hay objetivos activos, apuntando área general.");
         }
 
-        // Elegir objetivo dentro del tablero
-        Vector2 half = tamañoTablero * 0.5f;
-        Vector2 offset2D = Random.insideUnitCircle;
-        Vector3 objetivo = new Vector3(
-            centroPos.x + offset2D.x * half.x,
-            puntoDeLanzamiento.position.y,
-            centroPos.z + offset2D.y * half.y
-        );
+        // --- Definir punto de lanzamiento ---
+        Vector3 objetivo = (elegido != null)
+            ? new Vector3(elegido.position.x, puntoDeLanzamiento.position.y, elegido.position.z)
+            : centroPos;
 
-        bool fallo = Random.value < chanceFallar;
-        if (fallo)
+        // --- Fallo intencional ---
+        if (Random.value < chanceFallar)
         {
             float missFactor = Random.Range(missFactorMin, missFactorMax);
-            Vector2 dirExterior = Random.insideUnitCircle.normalized;
-            objetivo = new Vector3(
-                centroPos.x + dirExterior.x * Mathf.Max(half.x, half.y) * missFactor,
-                puntoDeLanzamiento.position.y,
-                centroPos.z + dirExterior.y * Mathf.Max(half.x, half.y) * missFactor
-            );
+            Vector2 dir = Random.insideUnitCircle.normalized;
+            objetivo += new Vector3(dir.x, 0, dir.y) * missFactor;
+            Debug.Log($"AIController: Decidió fallar. Nuevo objetivo: {objetivo}");
         }
 
-        // --- Lanzamiento parabólico: calculamos la velocidad inicial exacta ---
-        Vector3 velocidadInicial = CalcularLanzamientoParabolico(puntoDeLanzamiento.position, objetivo, alturaExtra, Physics.gravity.y);
+        // --- Calcular lanzamiento ---
+        Vector3 velocidadInicial = CalcularLanzamientoParabolico(
+            puntoDeLanzamiento.position, objetivo, alturaExtra, Physics.gravity.y
+        );
 
-        // Aplicamos una ligera variación aleatoria sobre la magnitud para simular imprecisión
         float variacion = Random.Range(rangoFuerzaPercent.x, rangoFuerzaPercent.y);
         velocidadInicial *= variacion;
 
-        // Instanciar y fijar la velocidad directamente (evita problemas con la masa y ForceMode)
+        // --- Instanciar y lanzar ---
         LanzamientoTejo instancia = Instantiate(tejoPrefab, puntoDeLanzamiento.position, puntoDeLanzamiento.rotation);
         instancia.IniciarConVelocidad(puntoDeLanzamiento.position, velocidadInicial);
 
+        // === DEBUGS CLAVE ===
+        Debug.Log($"[IA] Lanzamiento -> objetivo: {objetivo}, velocidadInicial: {velocidadInicial}, variacion: {variacion}");
+
+        Rigidbody rb = instancia.GetComponent<Rigidbody>();
+        if (rb != null)
+            Debug.Log($"[IA] Velocidad real Rigidbody tras iniciar: {rb.linearVelocity}");
+
+        // --- Registrar tejo ---
         if (GameManagerTejo.instance != null)
             GameManagerTejo.instance.RegistrarTejoLanzado();
 
@@ -134,8 +156,6 @@ public class AIController : MonoBehaviour
         lanzando = false;
     }
 
-    // Calcula la velocidad inicial necesaria para que un objeto lanzado desde 'origen' llegue a 'destino'
-    // alcanzando aproximadamente 'alturaMax' en la curva. gravedad debe ser negativo (Physics.gravity.y).
     Vector3 CalcularLanzamientoParabolico(Vector3 origen, Vector3 destino, float alturaMax, float gravedad)
     {
         Vector3 desplazamiento = destino - origen;
@@ -145,15 +165,11 @@ public class AIController : MonoBehaviour
         float altura = destino.y - origen.y;
         float h = Mathf.Max(alturaMax, altura + 0.1f);
 
-        // Tiempos de subida y bajada
         float tiempoSubida = Mathf.Sqrt(2 * h / -gravedad);
         float tiempoBajada = Mathf.Sqrt(2 * Mathf.Abs(h - altura) / -gravedad);
         float tiempoTotal = tiempoSubida + tiempoBajada;
 
-        // Velocidad horizontal necesaria
         Vector3 velocidadXZ = desplazamientoXZ / tiempoTotal;
-
-        // Velocidad vertical inicial
         float velocidadY = Mathf.Sqrt(-2 * gravedad * h);
 
         Vector3 resultado = velocidadXZ + Vector3.up * velocidadY;

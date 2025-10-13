@@ -1,25 +1,23 @@
 using UnityEngine;
+using System.Collections;
 
 public class ControlJugador : MonoBehaviour
 {
     [Header("Referencias Esenciales")]
-    public Camera mainCamera;           // La cámara principal de la escena
-    public LanzamientoTejo tejoPrefab;  // El Prefab de tu tejo para crearlo
-    public Transform puntoDeLanzamiento; // Un objeto vacío que marca de dónde sale el tejo
-    public BarraDeFuerza barraDeFuerza; // Referencia a tu barra de fuerza
+    public Camera mainCamera;
+    public LanzamientoTejo tejoPrefab;
+    public Transform puntoDeLanzamiento;
+    public BarraDeFuerza barraDeFuerza;
 
     [Header("Configuración de Lanzamiento")]
-    [Tooltip("Controla qué tan alto será el arco del tiro. Un valor entre 0.5 y 1.5 funciona bien.")]
     public float alturaDelArco = 0.8f;
-    [Tooltip("Ajusta la potencia general del lanzamiento.")]
     public float multiplicadorDeFuerza = 60f;
 
     private LanzamientoTejo tejoActual;
-    private bool puedeLanzar = true; // Para evitar lanzamientos múltiples
+    private bool puedeLanzar = true;
 
     void OnEnable()
     {
-        // Suscribimos para crear el tejo cuando empiece el turno humano
         if (TurnManager.instance != null)
             TurnManager.instance.OnTurnChanged += OnTurnChanged;
         else
@@ -32,7 +30,7 @@ public class ControlJugador : MonoBehaviour
             TurnManager.instance.OnTurnChanged -= OnTurnChanged;
     }
 
-    System.Collections.IEnumerator WaitAndSubscribe()
+    IEnumerator WaitAndSubscribe()
     {
         while (TurnManager.instance == null)
             yield return null;
@@ -41,7 +39,6 @@ public class ControlJugador : MonoBehaviour
 
     void Start()
     {
-        // Sólo preparamos el tejo si es turno humano en inicio (evita pre-instantiar cuando empieza IA)
         if (TurnManager.instance == null || TurnManager.instance.IsHumanTurn())
         {
             PrepararNuevoTejo();
@@ -50,7 +47,6 @@ public class ControlJugador : MonoBehaviour
 
     void OnTurnChanged(int jugador)
     {
-        // Si ahora es el turno humano, preparamos el tejo
         if (TurnManager.instance != null && TurnManager.instance.IsHumanTurn())
         {
             PrepararNuevoTejo();
@@ -58,27 +54,22 @@ public class ControlJugador : MonoBehaviour
         }
         else
         {
-            // Si no es turno humano, aseguramos que no pueda lanzar y no dejamos tejos preparados
             puedeLanzar = false;
         }
     }
 
     void Update()
     {
-        // Solo permitimos input si es el turno humano
         if (TurnManager.instance == null || !TurnManager.instance.IsHumanTurn()) return;
-
-        // Si no podemos lanzar, no hacemos nada.
         if (!puedeLanzar) return;
 
-        // Detectamos el clic izquierdo del mouse
         if (Input.GetMouseButtonDown(0))
         {
-            LanzarTejo();
+            StartCoroutine(LanzarTejoSincronizado());
         }
     }
 
-    private void LanzarTejo()
+    private IEnumerator LanzarTejoSincronizado()
     {
         // --- Paso 1: Calcular la Dirección con Raycasting ---
         Ray rayo = mainCamera.ScreenPointToRay(Input.mousePosition);
@@ -87,18 +78,21 @@ public class ControlJugador : MonoBehaviour
         if (Physics.Raycast(rayo, out hitInfo))
         {
             Vector3 puntoDestino = hitInfo.point;
-
-            // --- Paso 2: Obtener la Fuerza ---
             float fuerza = barraDeFuerza.GetValorFuerza() * multiplicadorDeFuerza;
 
-            // --- Paso 3: Calcular el Vector de Lanzamiento ---
             Vector3 direccion = puntoDestino - puntoDeLanzamiento.position;
             Vector3 direccionDeLanzamiento = new Vector3(direccion.x, 0, direccion.z).normalized;
             direccionDeLanzamiento.y = alturaDelArco;
 
-            // --- Paso 4: Lanzar el Tejo ---
             if (tejoActual != null)
             {
+                // Asegurarnos de que el GameObject y su Awake/Start ya corrieron en este Frame
+                yield return null;
+
+                // Esperamos el próximo FixedUpdate para sincronizar con Física
+                Debug.Log(" [Jugador] Esperando FixedUpdate antes de lanzar...");
+                yield return new WaitForFixedUpdate();
+
                 tejoActual.Iniciar(puntoDeLanzamiento.position, direccionDeLanzamiento, fuerza);
 
                 Tejo tejoComp = tejoActual.GetComponent<Tejo>();
@@ -108,6 +102,7 @@ public class ControlJugador : MonoBehaviour
                 if (GameManagerTejo.instance != null)
                     GameManagerTejo.instance.RegistrarTejoLanzado();
 
+                Debug.Log(" [Jugador] Lanzamiento sincronizado completado.");
                 tejoActual = null;
                 puedeLanzar = false;
             }
@@ -118,20 +113,23 @@ public class ControlJugador : MonoBehaviour
         }
     }
 
-    // Método para crear un nuevo tejo y prepararlo para el lanzamiento
     public void PrepararNuevoTejo()
     {
-        // Evitar instanciar si ya existe uno preparado
         if (tejoActual != null) return;
-
-        // Sólo crear si es turno humano (protección adicional)
-        if (TurnManager.instance != null && !TurnManager.instance.IsHumanTurn())
-            return;
+        if (TurnManager.instance != null && !TurnManager.instance.IsHumanTurn()) return;
 
         if (tejoPrefab != null)
         {
             tejoActual = Instantiate(tejoPrefab, puntoDeLanzamiento.position, puntoDeLanzamiento.rotation);
-            puedeLanzar = true; // Permitimos el lanzamiento
+            puedeLanzar = true;
         }
     }
+
+    public void AsignarTejoExistente(LanzamientoTejo nuevoTejo)
+    {
+        tejoActual = nuevoTejo;
+        puedeLanzar = true;
+        Debug.Log("ControlJugador: nuevo tejo asignado correctamente.");
+    }
 }
+

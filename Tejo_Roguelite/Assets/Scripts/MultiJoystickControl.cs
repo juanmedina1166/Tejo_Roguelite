@@ -2,20 +2,20 @@ using UnityEngine;
 
 public class MultiJoystickControl : MonoBehaviour
 {
+    //  Variable añadida para guardar el tejo actual del jugador
+    private Tejo tejoActual;
+
     /// <summary>
     /// Prepara la escena para la siguiente ronda de lanzamientos.
     /// </summary>
     public void PrepareForNextRound()
     {
-        // Esta función es llamada por el GameManager al cambiar de turno.
         Debug.Log("Preparando la siguiente ronda...");
 
-        // Aquí iría la lógica para:
         // 1. Limpiar los tejos de la ronda anterior.
         LimpiarTejosAnteriores();
 
         // 2. Reactivar los controles para el siguiente jugador.
-        // (Por ejemplo, si tienes un objeto 'ControlJugadorMouse', lo reactivarías aquí)
         var controlJugador = FindObjectOfType<ControlJugador>();
         if (controlJugador != null)
         {
@@ -23,12 +23,25 @@ public class MultiJoystickControl : MonoBehaviour
         }
     }
 
+    //  Asigna el tejo actual al control del jugador
+    public void AsignarTejoActual(Tejo nuevoTejo)
+    {
+        tejoActual = nuevoTejo;
+        Debug.Log(" Tejo actual asignado al control del jugador.");
+    }
+
+    // (Opcional) Método para acceder al tejo desde otros scripts
+    public Tejo GetTejoActual()
+    {
+        return tejoActual;
+    }
+
     private void LimpiarTejosAnteriores()
     {
         // Busca todos los objetos con el script 'Tejo' en la escena
         Tejo[] tejosEnEscena = FindObjectsOfType<Tejo>();
 
-        // Y los destruye
+        // Los destruye
         foreach (Tejo tejo in tejosEnEscena)
         {
             Destroy(tejo.gameObject);
