@@ -7,6 +7,7 @@ public class Tejo : MonoBehaviour
     private Rigidbody rb;
     private bool fueLanzado = false;
     private bool haTerminado = false;
+    public int jugadorID;
 
     // ✅ Nueva variable para indicar si puede lanzarse
     public bool puedeLanzar = false;
@@ -30,7 +31,6 @@ public class Tejo : MonoBehaviour
             if (GameManagerTejo.instance != null)
                 GameManagerTejo.instance.TejoTermino(this);
 
-            Destroy(gameObject);
             return;
         }
 
@@ -43,7 +43,6 @@ public class Tejo : MonoBehaviour
             if (GameManagerTejo.instance != null)
                 GameManagerTejo.instance.TejoTermino(this);
 
-            Destroy(gameObject);
         }
     }
 

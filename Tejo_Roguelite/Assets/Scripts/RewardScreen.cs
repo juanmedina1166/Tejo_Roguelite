@@ -77,7 +77,7 @@ public class RewardScreen : MonoBehaviour
         // Ocultamos la pantalla de recompensa
         rewardScreenPanel.SetActive(false);
 
-        // Aquí le dirías a tu GameManager que puede empezar la siguiente ronda
-        // Ejemplo: GameManager.instance.IniciarSiguienteRonda();
+        // ¡NUEVO! Le decimos al GameManager que reinicie para la siguiente partida.
+        GameManagerTejo.instance.ReiniciarParaNuevaPartida();
     }
 }

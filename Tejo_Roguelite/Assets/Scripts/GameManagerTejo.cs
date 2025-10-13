@@ -1,9 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using TMPro;
 
 public class GameManagerTejo : MonoBehaviour
 {
+    // Arriba del todo de tu clase GameManagerTejo, pero dentro de ella.
+    public enum GameState { Jugando, FinDeRonda, PartidaTerminada }
+    private GameState estadoActual;
     public static GameManagerTejo instance;
 
     [Header("Puntajes")]
@@ -11,7 +15,7 @@ public class GameManagerTejo : MonoBehaviour
     public int puntajeMaximo = 21;
 
     [Header("UI Puntajes")]
-    public Text[] puntajeTextos;
+    public TextMeshProUGUI[] puntajeTextos;
 
     [Header("Ronda / Turnos")]
     [SerializeField] private int maxTiros = 3;
@@ -26,8 +30,13 @@ public class GameManagerTejo : MonoBehaviour
     [SerializeField] private Transform spawnJugador;
 
     private int tirosRealizados = 0;
+    private int turnosJugadosEnRonda = 0;
     private int cambiosDeTurno = 0;
     private bool esperandoCambioTurno = false;
+
+    // Añade esta línea en la sección de Headers, junto a las otras referencias de UI.
+    [Header("Pantallas")]
+    public RewardScreen rewardScreen; // ¡Arrastra tu UIManager aquí en el Inspector!
 
     private void Awake()
     {
@@ -37,6 +46,25 @@ public class GameManagerTejo : MonoBehaviour
     private void Start()
     {
         StartCoroutine(CrearTejoConDelay(0.2f));
+        estadoActual = GameState.Jugando; // Empezamos la partida en el estado "Jugando"
+    }
+
+    private void OnEnable()
+    {
+        // Nos suscribimos al evento del TurnManager
+        if (TurnManager.instance != null)
+        {
+            TurnManager.instance.OnTurnChanged += ManejarCambioDeTurno;
+        }
+    }
+
+    private void OnDisable()
+    {
+        // Nos damos de baja para evitar errores
+        if (TurnManager.instance != null)
+        {
+            TurnManager.instance.OnTurnChanged -= ManejarCambioDeTurno;
+        }
     }
 
     private IEnumerator CrearTejoConDelay(float delay)
@@ -101,12 +129,31 @@ public class GameManagerTejo : MonoBehaviour
 
     public void TejoTermino(Tejo tejo)
     {
-        StartCoroutine(MoverCentroConDelay(delayMoverCentro));
+        Debug.Log($"El tejo de {TurnManager.instance.CurrentTurn()} se ha detenido.");
+        StartCoroutine(RutinaCambioDeTurno());
 
-        if (!esperandoCambioTurno) return;
+    }
+    private IEnumerator RutinaCambioDeTurno()
+    {
+        // Usamos la variable que ya tenías para el delay.
+        Debug.Log($"Esperando {delayCambioTurno} segundos antes de cambiar de turno...");
+        yield return new WaitForSeconds(delayCambioTurno);
 
-        StartCoroutine(CambiarTurnoDespuesDeRetraso(delayCambioTurno));
-        esperandoCambioTurno = false;
+        // Después de la pausa, le decimos al TurnManager que es el turno del siguiente.
+        if (TurnManager.instance != null)
+        {
+            TurnManager.instance.NextTurn();
+        }
+    }
+
+    private void LimpiarCancha()
+    {
+        Debug.Log("Limpiando los tejos de la cancha...");
+        Tejo[] tejosEnCancha = FindObjectsOfType<Tejo>();
+        foreach (var tejo in tejosEnCancha)
+        {
+            Destroy(tejo.gameObject);
+        }
     }
 
     private IEnumerator MoverCentroConDelay(float delay)
@@ -115,41 +162,6 @@ public class GameManagerTejo : MonoBehaviour
         CentroController centro = FindObjectOfType<CentroController>();
         if (centro != null)
             centro.MoverCentro();
-    }
-
-    private IEnumerator CambiarTurnoDespuesDeRetraso(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        if (TurnManager.instance != null)
-            TurnManager.instance.NextTurn();
-
-        AvisarCambioTurno();
-
-        MultiJoystickControl multi = FindObjectOfType<MultiJoystickControl>();
-        if (multi != null)
-            multi.PrepareForNextRound();
-
-        CentroController centro = FindObjectOfType<CentroController>();
-        if (centro != null)
-        {
-            var col3D = centro.GetComponent<Collider>();
-            if (col3D != null) col3D.enabled = true;
-
-            var renderer = centro.GetComponent<Renderer>();
-            if (renderer != null) renderer.enabled = true;
-
-            centro.MoverCentro();
-        }
-
-        tirosRealizados = 0;
-        if (blocker != null) blocker.SetActive(false);
-
-        //  Crear nuevo tejo para el jugador solo cuando vuelva su turno
-        if (TurnManager.instance != null && TurnManager.instance.IsHumanTurn())
-        {
-            CrearTejoJugador();
-        }
     }
 
     // ======================================================
@@ -171,6 +183,7 @@ public class GameManagerTejo : MonoBehaviour
         if (tejoJugadorPrefab != null && spawnJugador != null)
         {
             GameObject nuevoTejo = Instantiate(tejoJugadorPrefab, spawnJugador.position, spawnJugador.rotation);
+            nuevoTejo.GetComponent<Tejo>().jugadorID = 0;
             Debug.Log(" Nuevo tejo del jugador creado.");
 
             //  Asignar el nuevo tejo al ControlJugador (para que pueda lanzarlo)
@@ -192,5 +205,112 @@ public class GameManagerTejo : MonoBehaviour
         {
             Debug.LogWarning(" No se pudo crear el tejo: prefab o spawn no asignado.");
         }
+    }
+
+    // Añade estos NUEVOS métodos a GameManagerTejo.cs
+
+    /// <summary>
+    /// Este método se activa cada vez que el TurnManager anuncia un nuevo turno.
+    /// </summary>
+    private void ManejarCambioDeTurno(int nuevoJugadorID)
+    {
+        // Cada vez que hay un cambio de turno, incrementamos nuestro contador.
+        turnosJugadosEnRonda++;
+
+        // Ahora, la condición para terminar la ronda es:
+        // 1. Que el turno vuelva a ser del jugador 1.
+        // 2. Y que se haya jugado al menos un turno en esta ronda.
+        if (nuevoJugadorID == 1 && turnosJugadosEnRonda > 1 && estadoActual == GameState.Jugando)
+        {
+            StartCoroutine(RutinaFinDeRonda());
+        }
+    }
+
+    /// <summary>
+    /// Corrutina que maneja la secuencia de fin de ronda.
+    /// </summary>
+    private IEnumerator RutinaFinDeRonda()
+    {
+        estadoActual = GameState.FinDeRonda;
+        Debug.Log("FIN DE LA RONDA. Calculando puntos...");
+
+        // Esperamos un par de segundos para que el jugador vea el resultado
+        yield return new WaitForSeconds(2f);
+
+        // --- LÓGICA DE PUNTUACIÓN DE FIN DE RONDA ---
+        // Aquí es donde calculas puntos como el de "mano" (el más cercano)
+        // Nota: Necesitarás una forma de obtener las posiciones de los tejos lanzados.
+        // DarPuntoAlMasCercano(...); 
+
+        // --- COMPROBAR SI LA PARTIDA TERMINÓ ---
+        bool partidaGanada = false;
+        for (int i = 0; i < puntajes.Length; i++)
+        {
+            if (puntajes[i] >= puntajeMaximo)
+            {
+                partidaGanada = true;
+                break;
+            }
+        }
+
+        if (partidaGanada)
+        {
+            TerminarPartida();
+        }
+        else
+        {
+            // Si nadie ha ganado, empezamos la siguiente ronda
+            Debug.Log("Nadie ha ganado todavía. Iniciando siguiente ronda.");
+            LimpiarCancha();
+            estadoActual = GameState.Jugando;
+            turnosJugadosEnRonda = 0;
+            yield return null;
+            CrearTejoJugador();
+            // Aquí puedes añadir lógica para limpiar los tejos viejos de la cancha.
+        }
+    }
+
+    /// <summary>
+    /// Se llama cuando un jugador alcanza el puntaje máximo.
+    /// </summary>
+    private void TerminarPartida()
+    {
+        estadoActual = GameState.PartidaTerminada;
+        Debug.Log("¡PARTIDA TERMINADA! Mostrando recompensas.");
+
+        // ¡La conexión clave! Llamamos a la pantalla de recompensas.
+        if (rewardScreen != null)
+        {
+            rewardScreen.MostrarRecompensas();
+        }
+        else
+        {
+            Debug.LogError("RewardScreen no está asignado en el GameManager!");
+        }
+    }
+
+    public void ReiniciarParaNuevaPartida()
+    {
+        Debug.Log("Reiniciando el juego para una nueva partida...");
+
+        // 1. Reiniciar puntajes
+        for (int i = 0; i < puntajes.Length; i++)
+        {
+            puntajes[i] = 0;
+        }
+        // Actualizar la UI a 0
+        // Necesitarás un método que redibuje los puntajes, vamos a asumir que lo tienes.
+        // ActualizarPuntajeUI(); 
+
+        LimpiarCancha();
+
+        // 3. Reiniciar el turno al jugador 1
+        TurnManager.instance.SetTurn(1);
+
+        // 4. Volver al estado de "Jugando"
+        estadoActual = GameState.Jugando;
+
+        // 5. Crear el primer tejo para el jugador
+
     }
 }

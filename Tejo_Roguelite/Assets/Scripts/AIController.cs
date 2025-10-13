@@ -136,6 +136,7 @@ public class AIController : MonoBehaviour
 
         // --- Instanciar y lanzar ---
         LanzamientoTejo instancia = Instantiate(tejoPrefab, puntoDeLanzamiento.position, puntoDeLanzamiento.rotation);
+        instancia.GetComponent<Tejo>().jugadorID = 1;
         instancia.IniciarConVelocidad(puntoDeLanzamiento.position, velocidadInicial);
 
         // === DEBUGS CLAVE ===
