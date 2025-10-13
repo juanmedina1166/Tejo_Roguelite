@@ -15,8 +15,8 @@ public static class GameEvents
     public static void TriggerTejoThrown(GameObject tejoInstance) => OnTejoThrown?.Invoke(tejoInstance);
 
     // Eventos de Puntuación (pasamos los puntos base)
-    public static event Action<int> OnMechaExplodes;
-    public static void TriggerMechaExplodes(int basePoints) => OnMechaExplodes?.Invoke(basePoints);
+    public static event Action<int> OnMechaExploded;
+    public static void TriggerMechaExploded(int basePoints) => OnMechaExploded?.Invoke(basePoints);
 
     public static event Action<int> OnEmbocinada;
     public static void TriggerEmbocinada(int basePoints) => OnEmbocinada?.Invoke(basePoints);
