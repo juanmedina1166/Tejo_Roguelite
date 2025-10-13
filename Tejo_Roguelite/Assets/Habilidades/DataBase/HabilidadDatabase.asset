@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 671badf9fdb540b47a1cb71c61de9b47, type: 3}
+  m_Name: HabilidadDatabase
+  m_EditorClassIdentifier: 
+  todasLasHabilidades:
+  - {fileID: 11400000, guid: 5133e1627fcda634292f68a09e4ef832, type: 2}
+  - {fileID: 11400000, guid: 66d59ed6fe347114a95736448d3c9356, type: 2}
+  - {fileID: 11400000, guid: f87e69456382e384ab0d5d8665aae0e0, type: 2}
+  - {fileID: 11400000, guid: e20471d6bd8ea38448722a755766822f, type: 2}
+  - {fileID: 11400000, guid: 0c4da54836441dd42ac015096efc5a74, type: 2}
+  - {fileID: 11400000, guid: 6223e6fc5701e2e4ca7650a81277a675, type: 2}
