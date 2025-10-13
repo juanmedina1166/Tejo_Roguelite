@@ -21,6 +21,10 @@ public class GameManagerTejo : MonoBehaviour
     [Header("Control de Input")]
     [SerializeField] private GameObject blocker;
 
+    [Header("Prefabs y posiciones")]
+    [SerializeField] private GameObject tejoJugadorPrefab;
+    [SerializeField] private Transform spawnJugador;
+
     private int tirosRealizados = 0;
     private int cambiosDeTurno = 0;
     private bool esperandoCambioTurno = false;
@@ -28,6 +32,17 @@ public class GameManagerTejo : MonoBehaviour
     private void Awake()
     {
         if (instance == null) instance = this;
+    }
+
+    private void Start()
+    {
+        StartCoroutine(CrearTejoConDelay(0.2f));
+    }
+
+    private IEnumerator CrearTejoConDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        CrearTejoJugador();
     }
 
     public void SumarPuntos(int jugadorID, int puntos)
@@ -39,7 +54,6 @@ public class GameManagerTejo : MonoBehaviour
 
         if (puntajes[jugadorID] >= puntajeMaximo)
         {
-            // Aquí iría la lógica de victoria
             Debug.Log($"¡El jugador {jugadorID + 1} ha ganado el juego!");
         }
     }
@@ -72,28 +86,21 @@ public class GameManagerTejo : MonoBehaviour
         }
     }
 
-    // --- ¡AQUÍ ESTÁ EL MÉTODO QUE FALTABA! ---
     public void AvisarCambioTurno()
     {
         cambiosDeTurno++;
         Debug.Log($"Cambio de turno #{cambiosDeTurno}");
-
-        // Aquí puedes agregar lógica si el juego termina después de un número de rondas
     }
 
     public void RegistrarTejoLanzado()
     {
         tirosRealizados++;
-        if (tirosRealizados >= maxTiros)
-        {
-            if (blocker != null) blocker.SetActive(true);
-            esperandoCambioTurno = true;
-        }
+        esperandoCambioTurno = true;
+        if (blocker != null) blocker.SetActive(true);
     }
 
     public void TejoTermino(Tejo tejo)
     {
-        // NOTA 3D: Asegúrate de que tu script "Tejo.cs" llame a este método cuando el Rigidbody 3D se detenga.
         StartCoroutine(MoverCentroConDelay(delayMoverCentro));
 
         if (!esperandoCambioTurno) return;
@@ -117,7 +124,6 @@ public class GameManagerTejo : MonoBehaviour
         if (TurnManager.instance != null)
             TurnManager.instance.NextTurn();
 
-        // Esta línea es la que daba el error. Ahora funcionará.
         AvisarCambioTurno();
 
         MultiJoystickControl multi = FindObjectOfType<MultiJoystickControl>();
@@ -127,7 +133,6 @@ public class GameManagerTejo : MonoBehaviour
         CentroController centro = FindObjectOfType<CentroController>();
         if (centro != null)
         {
-            // NOTA 3D: El objeto del Centro ahora debe tener un Collider 3D.
             var col3D = centro.GetComponent<Collider>();
             if (col3D != null) col3D.enabled = true;
 
@@ -139,5 +144,53 @@ public class GameManagerTejo : MonoBehaviour
 
         tirosRealizados = 0;
         if (blocker != null) blocker.SetActive(false);
+
+        //  Crear nuevo tejo para el jugador solo cuando vuelva su turno
+        if (TurnManager.instance != null && TurnManager.instance.IsHumanTurn())
+        {
+            CrearTejoJugador();
+        }
+    }
+
+    // ======================================================
+    // === NUEVO MÉTODO: creación e inicialización completa del tejo ===
+    // ======================================================
+    private void CrearTejoJugador()
+    {
+        // Elimina cualquier tejo viejo que haya quedado inactivo
+        foreach (Tejo viejo in FindObjectsOfType<Tejo>())
+        {
+            if (!viejo.gameObject.activeInHierarchy)
+                Destroy(viejo.gameObject);
+        }
+
+        // Evita duplicar si ya existe un tejo activo
+        Tejo tejoExistente = FindObjectOfType<Tejo>();
+        if (tejoExistente != null) return;
+
+        if (tejoJugadorPrefab != null && spawnJugador != null)
+        {
+            GameObject nuevoTejo = Instantiate(tejoJugadorPrefab, spawnJugador.position, spawnJugador.rotation);
+            Debug.Log(" Nuevo tejo del jugador creado.");
+
+            //  Asignar el nuevo tejo al ControlJugador (para que pueda lanzarlo)
+            var controlJugador = FindObjectOfType<ControlJugador>();
+            if (controlJugador != null)
+            {
+                var lanzador = nuevoTejo.GetComponent<LanzamientoTejo>();
+                controlJugador.AsignarTejoExistente(lanzador);
+            }
+
+            //  Marcarlo como "listo para disparar"
+            var scriptTejo = nuevoTejo.GetComponent<Tejo>();
+            if (scriptTejo != null)
+            {
+                scriptTejo.ResetTejo(); // este método debería dejarlo listo (posición, física desactivada, etc.)
+            }
+        }
+        else
+        {
+            Debug.LogWarning(" No se pudo crear el tejo: prefab o spawn no asignado.");
+        }
     }
 }

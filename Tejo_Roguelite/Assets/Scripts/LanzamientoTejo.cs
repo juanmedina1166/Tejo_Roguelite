@@ -1,42 +1,119 @@
 using UnityEngine;
 
-// Obliga a que este GameObject tenga siempre un componente Rigidbody
 [RequireComponent(typeof(Rigidbody))]
 public class LanzamientoTejo : MonoBehaviour
 {
     private Rigidbody rb;
     private Vector3 escalaInicial;
 
-    // Awake se llama una vez al crear el objeto, antes que Start
+    [Header("Seguridad de lanzamiento")]
+    [Tooltip("Velocidad máxima permitida al lanzar (m/s). Si la velocidad calculada supera este valor, se clampeará.")]
+    [SerializeField] private float maxLaunchSpeed = 40f;
+
     void Awake()
     {
-        // Obtenemos la referencia al componente Rigidbody para poder usarlo
         rb = GetComponent<Rigidbody>();
         escalaInicial = transform.localScale;
+
+        if (rb != null)
+        {
+            rb.useGravity = false;
+            rb.isKinematic = false;
+            Debug.Log($" [Awake] Tejo inicializado. Kinematic={rb.isKinematic}, Gravity={rb.useGravity}");
+        }
     }
 
-    /// <summary>
-    /// Inicia el lanzamiento del tejo aplicando una fuerza f�sica.
-    /// </summary>
-    /// <param name="origen">Punto desde donde se lanza el tejo.</param>
-    /// <param name="direccionLanzamiento">Vector que indica la direcci�n y �ngulo del tiro.</param>
-    /// <param name="fuerza">La potencia del tiro, que viene de la barra de fuerza.</param>
+    // Ahora Iniciar lanza mediante una corrutina que establece la velocidad directamente
     public void Iniciar(Vector3 origen, Vector3 direccionLanzamiento, float fuerza)
     {
-        // Colocamos el tejo en la posici�n inicial
-        transform.position = origen;
-        transform.localScale = escalaInicial; // Reseteamos la escala por si acaso
+        StartCoroutine(IniciarConRetraso(origen, direccionLanzamiento, fuerza));
+    }
 
-        // Reseteamos cualquier f�sica anterior para un lanzamiento limpio
+    private System.Collections.IEnumerator IniciarConRetraso(Vector3 origen, Vector3 direccionLanzamiento, float fuerza)
+    {
+        // Reinicio sincrónico
+        ResetearFisica();
+
+        // Asegurarnos de que el GameObject completó Awake/Start en este frame
+        yield return null;
+
+        // Esperar al siguiente FixedUpdate para sincronizar con la física (protección extra)
+        yield return new WaitForFixedUpdate();
+
+        transform.position = origen;
+        transform.localScale = escalaInicial;
+        rb.useGravity = true;
+        rb.isKinematic = false;
+        rb.WakeUp();
+
+        // Normalizar dirección y calcular velocidad objetivo.
+        Vector3 dirNorm = direccionLanzamiento.normalized;
+
+        // Interpretamos 'fuerza' como un impulso (Newton·seg). Vel = impulso / masa.
+        float masa = (rb != null && rb.mass > 0f) ? rb.mass : 1f;
+        Vector3 velocidadCalculada = dirNorm * (fuerza / masa);
+
+        // Aplicamos tope de seguridad para evitar valores absurdos
+        if (velocidadCalculada.magnitude > maxLaunchSpeed)
+        {
+            Debug.LogWarning($"⚠ Vel calculada ({velocidadCalculada.magnitude:F2}) mayor que maxLaunchSpeed ({maxLaunchSpeed}), clampearé.");
+            velocidadCalculada = velocidadCalculada.normalized * maxLaunchSpeed;
+        }
+
+        Debug.Log($" [Antes de SET velocity] fuerza={fuerza:F2}, masa={masa:F2}, velCalc={velocidadCalculada.magnitude:F2}, pos={transform.position}");
+
+        // Asignamos la velocidad directamente (comportamiento determinista, igual que IA)
+        rb.linearVelocity = velocidadCalculada;
+        rb.WakeUp();
+
+        Debug.Log($" [Después de SET velocity] Velocidad={rb.linearVelocity.magnitude:F2}, Vector={rb.linearVelocity}, UseGravity={rb.useGravity}, Kinematic={rb.isKinematic}");
+    }
+
+    public void IniciarConVelocidad(Vector3 origen, Vector3 velocidadInicial)
+    {
+        ResetearFisica();
+
+        transform.position = origen;
+        transform.localScale = escalaInicial;
+
+        rb.useGravity = true;
+        rb.isKinematic = false;
+
+        // Aplicar tope también para lanzamientos de IA
+        Vector3 velocidadAjustada = velocidadInicial;
+        if (velocidadInicial.magnitude > maxLaunchSpeed)
+            velocidadAjustada = velocidadInicial.normalized * maxLaunchSpeed;
+
+        rb.linearVelocity = velocidadAjustada;
+        rb.WakeUp();
+
+        Debug.Log($" [IA Lanzamiento] Velocidad inicial={rb.linearVelocity.magnitude:F2}, Vector={rb.linearVelocity}");
+    }
+
+    private void ResetearFisica()
+    {
+        if (rb == null) return;
+
+        Debug.Log($" [ResetearFisica] Antes del reset: Vel={rb.linearVelocity.magnitude:F2}, Kinematic={rb.isKinematic}, Gravity={rb.useGravity}");
+
+        rb.isKinematic = false;
+        rb.useGravity = false;
+
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
-        // �La magia del 3D! Aplicamos una fuerza en la direcci�n calculada.
-        // ForceMode.Impulse aplica la fuerza instant�neamente, ideal para un lanzamiento.
-        rb.AddForce(direccionLanzamiento.normalized * fuerza, ForceMode.Impulse);
+        // Sleep + WakeUp inmediato para intentar dejar el cuerpo limpio
+        rb.Sleep();
+        rb.WakeUp();
+
+        Debug.Log($" [ResetearFisica] Después del reset: Vel={rb.linearVelocity.magnitude:F2}, Kinematic={rb.isKinematic}, Gravity={rb.useGravity}");
     }
 
-    // El m�todo Update() ya no es necesario para el movimiento,
-    // porque el motor de f�sica de Unity se encarga de ello autom�ticamente.
-    // Podr�as usarlo para efectos visuales, como hacer que el tejo rote.
+    private void OnDestroy()
+    {
+        if (rb != null)
+            Debug.Log($" [Destroy] Tejo destruido. Última Vel={rb.linearVelocity.magnitude:F2}");
+    }
 }
+
+
