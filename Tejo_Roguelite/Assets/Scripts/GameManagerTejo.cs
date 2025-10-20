@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using TMPro;
+using System.Collections.Generic;
 
 public class GameManagerTejo : MonoBehaviour
 {
@@ -33,6 +34,13 @@ public class GameManagerTejo : MonoBehaviour
     private int turnosJugadosEnRonda = 0;
     private int cambiosDeTurno = 0;
     private bool esperandoCambioTurno = false;
+
+    [Header("Objetivos")]
+    public Transform bocin; // Arrastra el objeto del centro del objetivo aquí
+
+    private List<Tejo> tejosDeLaRonda = new List<Tejo>();
+
+    private bool mechaExplotadaEnRonda = false;
 
     // Añade esta línea en la sección de Headers, junto a las otras referencias de UI.
     [Header("Pantallas")]
@@ -93,27 +101,40 @@ public class GameManagerTejo : MonoBehaviour
             puntajeTextos[jugadorID].text = $"J{jugadorID + 1}: {puntajes[jugadorID]}";
     }
 
-    public void DarPuntoAlMasCercano(Vector3[] posicionesTejos, Vector3 centro)
+    public void DarPuntoAlMasCercano()
     {
-        float distanciaMin = float.MaxValue;
-        int jugadorCercano = -1;
+        if (mechaExplotadaEnRonda) return;
+        // Primero, comprobamos si en esta ronda se sumaron puntos por mechas.
+        // Si alguien hizo mecha, la regla de "mano" no aplica.
+        // (Necesitarás una variable bool para controlar esto).
+        // if (alguienHizoMechaEnLaRonda) return;
 
-        for (int i = 0; i < posicionesTejos.Length; i++)
+        if (bocin == null || tejosDeLaRonda.Count == 0) return;
+
+        float distanciaMinima = float.MaxValue;
+        Tejo tejoMasCercano = null;
+
+        // Recorremos los tejos lanzados en la ronda
+        foreach (var tejo in tejosDeLaRonda)
         {
-            float dist = Vector3.Distance(posicionesTejos[i], centro);
-            if (dist < distanciaMin)
+            if (tejo == null) continue;
+
+            float distancia = Vector3.Distance(tejo.transform.position, bocin.position);
+            if (distancia < distanciaMinima)
             {
-                distanciaMin = dist;
-                jugadorCercano = i;
+                distanciaMinima = distancia;
+                tejoMasCercano = tejo;
             }
         }
 
-        if (jugadorCercano >= 0)
+        // Si encontramos un tejo más cercano, le damos el punto a su dueño
+        if (tejoMasCercano != null)
         {
-            SumarPuntos(jugadorCercano, 1);
+            int idDelGanador = tejoMasCercano.jugadorID;
+            Debug.Log($"Punto por mano para el Jugador {idDelGanador + 1}! Distancia: {distanciaMinima}");
+            SumarPuntos(idDelGanador, 1);
         }
     }
-
     public void AvisarCambioTurno()
     {
         cambiosDeTurno++;
@@ -129,6 +150,7 @@ public class GameManagerTejo : MonoBehaviour
 
     public void TejoTermino(Tejo tejo)
     {
+        tejosDeLaRonda.Add(tejo);
         Debug.Log($"El tejo de {TurnManager.instance.CurrentTurn()} se ha detenido.");
         StartCoroutine(RutinaCambioDeTurno());
 
@@ -237,6 +259,8 @@ public class GameManagerTejo : MonoBehaviour
         // Esperamos un par de segundos para que el jugador vea el resultado
         yield return new WaitForSeconds(2f);
 
+         DarPuntoAlMasCercano();
+
         // --- LÓGICA DE PUNTUACIÓN DE FIN DE RONDA ---
         // Aquí es donde calculas puntos como el de "mano" (el más cercano)
         // Nota: Necesitarás una forma de obtener las posiciones de los tejos lanzados.
@@ -262,6 +286,7 @@ public class GameManagerTejo : MonoBehaviour
             // Si nadie ha ganado, empezamos la siguiente ronda
             Debug.Log("Nadie ha ganado todavía. Iniciando siguiente ronda.");
             LimpiarCancha();
+            tejosDeLaRonda.Clear();
             estadoActual = GameState.Jugando;
             turnosJugadosEnRonda = 0;
             yield return null;
@@ -310,7 +335,9 @@ public class GameManagerTejo : MonoBehaviour
         // 4. Volver al estado de "Jugando"
         estadoActual = GameState.Jugando;
 
-        // 5. Crear el primer tejo para el jugador
-
+    }
+    public void MarcarMechaExplotada()
+    {
+        mechaExplotadaEnRonda = true;
     }
 }

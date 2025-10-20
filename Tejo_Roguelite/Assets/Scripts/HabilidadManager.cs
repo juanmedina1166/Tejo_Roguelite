@@ -18,6 +18,18 @@ public class HabilidadManager : MonoBehaviour
     {
         return new List<Habilidad>(barajaDeHabilidades);
     }
+    private void OnEnable()
+    {
+        // Le decimos al sistema de eventos: "Cuando ocurra OnMechaExploded, llama a mi método OnMechaExploded_Handler"
+        GameEvents.OnMechaExploded += OnMechaExploded_Handler;
+    }
+
+    private void OnDisable()
+    {
+        // Le decimos al sistema de eventos que ya no necesitamos que nos avise.
+        // Esto es muy importante para evitar errores.
+        GameEvents.OnMechaExploded -= OnMechaExploded_Handler;
+    }
 
     /// <summary>
     /// Intenta añadir una habilidad a la baraja.
@@ -55,4 +67,29 @@ public class HabilidadManager : MonoBehaviour
             OnBarajaCambio?.Invoke();
         }
     }
+    private void OnMechaExploded_Handler(int puntosBase)
+    {
+        Debug.Log("==> PASO 2: HabilidadManager ha escuchado el evento.");
+        GameManagerTejo.instance.MarcarMechaExplotada();
+        // 1. Le preguntamos al TurnManager de quién es el turno (0 para humano, 1 para IA).
+        int idDelGanador = TurnManager.instance.CurrentPlayerIndex();
+
+        // 2. Le decimos al GameManager que sume los puntos BASE.
+        GameManagerTejo.instance.SumarPuntos(idDelGanador, puntosBase);
+
+        // 3. Revisamos si el jugador actual tiene habilidades de bonus.
+        if (idDelGanador == 0) // Asumiendo que solo el jugador humano tiene habilidades
+        {
+            foreach (var habilidad in barajaDeHabilidades)
+            {
+                if (habilidad.nombre == "Mecha Explosiva")
+                {
+                    int puntosExtra = (int)habilidad.valorNumerico1;
+                    // Si la tiene, le decimos al GameManager que sume los puntos EXTRA.
+                    GameManagerTejo.instance.SumarPuntos(idDelGanador, puntosExtra);
+                }
+            }
+        }
+    }
+
 }

@@ -146,10 +146,6 @@ public class AIController : MonoBehaviour
         if (rb != null)
             Debug.Log($"[IA] Velocidad real Rigidbody tras iniciar: {rb.linearVelocity}");
 
-        // --- Registrar tejo ---
-        if (GameManagerTejo.instance != null)
-            GameManagerTejo.instance.RegistrarTejoLanzado();
-
         Tejo tejoComp = instancia.GetComponent<Tejo>();
         if (tejoComp != null)
             tejoComp.ActivarDeteccion();

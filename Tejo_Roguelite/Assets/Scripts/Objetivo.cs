@@ -1,38 +1,32 @@
 using UnityEngine;
-using System;
 
-/// <summary>
-/// Colocar este script en cada objetivo del tablero.
-/// Al colisionar con un Tejo, el objetivo se destruye.
-/// Opcionalmente otorga 1 punto al jugador actual si existe GameManagerTejo y TurnManager.
-/// Publica un evento estático para que otros sistemas (p. ej. IA) reaccionen al ser destruido.
-/// </summary>
 [RequireComponent(typeof(Collider))]
 public class Objetivo : MonoBehaviour
 {
-    // Evento: (objetivo, playerIndexQueLoDestruyo)
-    public static event Action<Objetivo, int> OnObjetivoDestruido;
+    [Header("Configuración")]
+    [SerializeField] private int puntosBase = 3; // ¡Puedes configurar cuántos puntos vale este objetivo!
 
-    void OnCollisionEnter(Collision collision)
+    private bool haSidoGolpeado = false;
+
+    private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.GetComponent<Tejo>() != null)
+        // Si ya fue golpeado o el objeto que choca no es un Tejo, no hagas nada.
+        if (haSidoGolpeado || collision.gameObject.GetComponent<Tejo>() == null)
         {
-            int playerIndex = -1;
-            if (TurnManager.instance != null)
-            {
-                playerIndex = TurnManager.instance.CurrentPlayerIndex();
-            }
-
-            // Opcional: sumar punto al jugador actual
-            if (GameManagerTejo.instance != null && playerIndex >= 0)
-            {
-                GameManagerTejo.instance.SumarPuntos(playerIndex, 1);
-            }
-
-            // Notificar a suscriptores antes de destruir
-            OnObjetivoDestruido?.Invoke(this, playerIndex);
-
-            Destroy(gameObject);
+            return;
         }
+
+        haSidoGolpeado = true;
+        Debug.Log($"¡Objetivo '{gameObject.name}' golpeado!");
+        Debug.Log("==> PASO 1: Objetivo está a punto de lanzar el evento OnMechaExploded.");
+
+        // El objetivo ANUNCIA que fue explotado y cuántos puntos base vale.
+        // NO decide quién gana los puntos.
+        GameEvents.TriggerMechaExploded(puntosBase);
+
+        // Aquí puedes añadir un efecto de explosión o sonido.
+
+        // Finalmente, el objeto se destruye.
+        Destroy(gameObject);
     }
 }
