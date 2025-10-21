@@ -38,9 +38,15 @@ public class GameManagerTejo : MonoBehaviour
     [Header("Objetivos")]
     public Transform bocin; // Arrastra el objeto del centro del objetivo aquí
 
+    [SerializeField] private BocinTrigger bocinTrigger;
+
     private List<Tejo> tejosDeLaRonda = new List<Tejo>();
 
     private bool mechaExplotadaEnRonda = false;
+
+    private bool mechaExplotadaEnTurno = false;
+    private int idJugadorMecha = -1;
+    private int puntosBaseMecha = 0;
 
     // Añade esta línea en la sección de Headers, junto a las otras referencias de UI.
     [Header("Pantallas")]
@@ -152,9 +158,84 @@ public class GameManagerTejo : MonoBehaviour
     {
         tejosDeLaRonda.Add(tejo);
         Debug.Log($"El tejo de {TurnManager.instance.CurrentTurn()} se ha detenido.");
+        // 1. Comprobar dónde aterrizó el tejo
+        bool estaEmbocinado = false;
+        if (bocinTrigger != null)
+        {
+            estaEmbocinado = bocinTrigger.EstaTejoDentro(tejo);
+        }
+        else
+        {
+            Debug.LogError("¡BocinTrigger no está asignado en el GameManagerTejo!");
+        }
+
+        // 2. Comprobar si este tejo tocó una mecha (usando la variable que añadimos)
+        bool tejoTocoMecha = tejo.haTocadoMecha;
+
+        // 3. Obtener el ID del jugador actual
+        int idJugadorActual = TurnManager.instance.CurrentPlayerIndex();
+        bool scoreOcurrido = false;
+
+
+        // 4. Evaluar los puntos en orden de prioridad (Moñona > Embocinado > Mecha)
+
+        // CASO 1: MOÑONA (9 Puntos)
+        // El tejo tocó una mecha (tejoTocoMecha) Y aterrizó dentro del bocín (estaEmbocinado)
+        if (tejoTocoMecha && estaEmbocinado)
+        {
+            Debug.Log($"¡¡MOÑONA para Jugador {idJugadorActual + 1}!!");
+            SumarPuntos(idJugadorActual, 9);
+            scoreOcurrido = true;
+            // Los puntos extra de habilidades (como Mecha Explosiva) ya se sumaron
+            // gracias al HabilidadManager cuando la mecha explotó.
+        }
+        // CASO 2: EMBOCINADO (6 Puntos)
+        // El tejo NO tocó mecha, PERO aterrizó en el bocín.
+        else if (!tejoTocoMecha && estaEmbocinado)
+        {
+            Debug.Log($"¡EMBOCINADO para Jugador {idJugadorActual + 1}!");
+            SumarPuntos(idJugadorActual, 6);
+            scoreOcurrido = true;
+        }
+        // CASO 3: MECHA (3 Puntos, o los que sean)
+        // El tejo SÍ tocó mecha, pero NO aterrizó en el bocín.
+        // Usamos 'mechaExplotadaEnTurno' para asegurarnos de que el HabilidadManager
+        // realmente registró la mecha en este turno.
+        else if (mechaExplotadaEnTurno && idJugadorActual == idJugadorMecha && !estaEmbocinado)
+        {
+            Debug.Log($"¡MECHA para Jugador {idJugadorActual + 1}!");
+            SumarPuntos(idJugadorActual, puntosBaseMecha); // Suma los puntos base (ej: 3)
+            scoreOcurrido = true;
+            // Puntos extra de habilidad ya sumados por HabilidadManager.
+        }
+        // CASO 4: Tiro normal (sin puntos)
+        else
+        {
+            Debug.Log("Tiro sin puntos. Se calculará 'mano' al final de ronda si aplica.");
+        }
+
+        // Si ocurrió cualquier tipo de puntuación (Mecha, Embocinado o Moñona),
+        // usamos tu función 'MarcarMechaExplotada' para anular el punto de "mano".
+        if (scoreOcurrido)
+        {
+            MarcarMechaExplotada(); // Esto previene que se dé el punto de 'mano'
+        }
+
+        // 5. Resetear las variables del TURNO
+        mechaExplotadaEnTurno = false;
+        idJugadorMecha = -1;
+        puntosBaseMecha = 0;
+
+        // --- FIN DE LA NUEVA LÓGICA DE PUNTUACIÓN ---
+        if (CamaraSeguirTejo.instance != null)
+        {
+            CamaraSeguirTejo.instance.ForzarRetorno();
+        }
+        // 6. Iniciar la rutina para el siguiente jugador
         StartCoroutine(RutinaCambioDeTurno());
 
     }
+
     private IEnumerator RutinaCambioDeTurno()
     {
         // Usamos la variable que ya tenías para el delay.
@@ -287,6 +368,10 @@ public class GameManagerTejo : MonoBehaviour
             Debug.Log("Nadie ha ganado todavía. Iniciando siguiente ronda.");
             LimpiarCancha();
             tejosDeLaRonda.Clear();
+
+            if (bocinTrigger != null)
+                bocinTrigger.LimpiarLista();
+
             mechaExplotadaEnRonda = false;
             estadoActual = GameState.Jugando;
             turnosJugadosEnRonda = 0;
@@ -336,6 +421,16 @@ public class GameManagerTejo : MonoBehaviour
         // 4. Volver al estado de "Jugando"
         estadoActual = GameState.Jugando;
 
+    }
+    public void RegistrarMecha(int jugadorID, int puntosBase)
+    {
+        Debug.Log($"Registrando mecha para Jugador {jugadorID + 1} con {puntosBase} puntos base.");
+        mechaExplotadaEnTurno = true;
+        idJugadorMecha = jugadorID;
+        puntosBaseMecha = puntosBase;
+
+        // Nota: HabilidadManager ya llama a MarcarMechaExplotada(),
+        // así que la regla de "mano" ya está anulada para esta ronda.
     }
     public void MarcarMechaExplotada()
     {

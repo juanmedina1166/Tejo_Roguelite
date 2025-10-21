@@ -8,9 +8,8 @@ public class Tejo : MonoBehaviour
     private bool fueLanzado = false;
     private bool haTerminado = false;
     public int jugadorID;
-
-    // ✅ Nueva variable para indicar si puede lanzarse
     public bool puedeLanzar = false;
+    public bool haTocadoMecha = false;
 
     void Awake()
     {
@@ -59,6 +58,7 @@ public class Tejo : MonoBehaviour
         fueLanzado = false;
         haTerminado = false;
         puedeLanzar = true;
+        haTocadoMecha = false; // Reiniciamos el flag de mecha
 
         Debug.Log("🔄 Tejo reiniciado y listo para lanzar.");
     }

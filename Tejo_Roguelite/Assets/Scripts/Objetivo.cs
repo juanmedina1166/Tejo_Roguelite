@@ -10,14 +10,16 @@ public class Objetivo : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        Tejo tejo = collision.gameObject.GetComponent<Tejo>();
         // Si ya fue golpeado o el objeto que choca no es un Tejo, no hagas nada.
-        if (haSidoGolpeado || collision.gameObject.GetComponent<Tejo>() == null)
+        if (haSidoGolpeado || tejo == null)
         {
             return;
         }
 
         haSidoGolpeado = true;
         Debug.Log($"¡Objetivo '{gameObject.name}' golpeado!");
+        tejo.haTocadoMecha = true;
         Debug.Log("==> PASO 1: Objetivo está a punto de lanzar el evento OnMechaExploded.");
 
         // El objetivo ANUNCIA que fue explotado y cuántos puntos base vale.

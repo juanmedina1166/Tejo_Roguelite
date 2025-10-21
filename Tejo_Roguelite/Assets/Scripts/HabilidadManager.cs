@@ -67,17 +67,21 @@ public class HabilidadManager : MonoBehaviour
             OnBarajaCambio?.Invoke();
         }
     }
+   
     private void OnMechaExploded_Handler(int puntosBase)
     {
         Debug.Log("==> PASO 2: HabilidadManager ha escuchado el evento.");
-        GameManagerTejo.instance.MarcarMechaExplotada();
+        GameManagerTejo.instance.MarcarMechaExplotada(); // Esto avisa a la ronda que no hay "mano"
+
         // 1. Le preguntamos al TurnManager de quién es el turno (0 para humano, 1 para IA).
         int idDelGanador = TurnManager.instance.CurrentPlayerIndex();
 
-        // 2. Le decimos al GameManager que sume los puntos BASE.
-        GameManagerTejo.instance.SumarPuntos(idDelGanador, puntosBase);
+        // 2. ? ¡CAMBIO CLAVE! En lugar de sumar puntos, REGISTRAMOS la mecha en el GameManager.
+        // El GameManager decidirá si fue Mecha (3) o Moñona (9) cuando el tejo se detenga.
+        GameManagerTejo.instance.RegistrarMecha(idDelGanador, puntosBase);
 
         // 3. Revisamos si el jugador actual tiene habilidades de bonus.
+        // ESTO SÍ SE QUEDA, ya que son puntos EXTRA de la habilidad.
         if (idDelGanador == 0) // Asumiendo que solo el jugador humano tiene habilidades
         {
             foreach (var habilidad in barajaDeHabilidades)
@@ -91,5 +95,4 @@ public class HabilidadManager : MonoBehaviour
             }
         }
     }
-
 }
