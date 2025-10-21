@@ -175,6 +175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b27706497f8d5b1499a388015cb4c5a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  estadoActual: 0
   puntajes: 0000000000000000
   puntajeMaximo: 7
   puntajeTextos:
@@ -339,6 +340,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 42698476}
   m_CullTransparentMesh: 1
+--- !u!1 &137016365
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 137016366}
+  m_Layer: 0
+  m_Name: puntoInicial
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &137016366
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137016365}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.09126801, y: 0.70119196, z: -0.09126801, w: 0.70119196}
+  m_LocalPosition: {x: 10.2, y: 5.78, z: -0.31}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 14.832, y: 90, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -351,6 +383,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -476,6 +509,23 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8ec57b922d34174a9494eb93f9cca66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  puntoInicial: {fileID: 137016366}
+  suavizado: 1000
+  offsetDiagonal: {x: -5, y: 3, z: -5}
+  velocidadMinima: 0.2
+  tiempoParaDetener: 1
 --- !u!1 &362065679
 GameObject:
   m_ObjectHideFlags: 0
@@ -3063,3 +3113,4 @@ SceneRoots:
   - {fileID: 1613470160}
   - {fileID: 1031856691}
   - {fileID: 1444986090}
+  - {fileID: 137016366}
