@@ -259,7 +259,7 @@ public class GameManagerTejo : MonoBehaviour
         // Esperamos un par de segundos para que el jugador vea el resultado
         yield return new WaitForSeconds(2f);
 
-         DarPuntoAlMasCercano();
+        DarPuntoAlMasCercano();
 
         // --- LÓGICA DE PUNTUACIÓN DE FIN DE RONDA ---
         // Aquí es donde calculas puntos como el de "mano" (el más cercano)
@@ -287,6 +287,7 @@ public class GameManagerTejo : MonoBehaviour
             Debug.Log("Nadie ha ganado todavía. Iniciando siguiente ronda.");
             LimpiarCancha();
             tejosDeLaRonda.Clear();
+            mechaExplotadaEnRonda = false;
             estadoActual = GameState.Jugando;
             turnosJugadosEnRonda = 0;
             yield return null;
