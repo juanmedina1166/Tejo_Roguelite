@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class ControlJugador : MonoBehaviour
@@ -7,15 +8,34 @@ public class ControlJugador : MonoBehaviour
     public Camera mainCamera;
     public LanzamientoTejo tejoPrefab;
     public Transform puntoDeLanzamiento;
-    public BarraDeFuerza barraDeFuerza;
+    public Slider barraDeFuerzaSlider;
 
     [Header("Configuración de Lanzamiento")]
+    [Tooltip("La fuerza MÁXIMA (cuando la barra está al 100%)")]
+    public float multiplicadorDeFuerza = 60f; // Sincroniza con maxLaunchSpeed
+    [Tooltip("Velocidad de la barra oscilante")]
+    public float velocidadBarra = 1.5f;
+    [Tooltip("El error MÁXIMO en grados si fallas por completo")]
+    public float maxDesviacionAngular = 15f;
     public float alturaDelArco = 0.8f;
-    public float multiplicadorDeFuerza = 60f;
 
+    [Header("Feedback Visual")]
+    [Tooltip("Gradiente (Ej: Rojo en 0, Verde en 0.5, Rojo en 1)")]
+    public Gradient powerGradient;
+    private Image fillImage;
+    private Color colorDefaultFill;
+
+    // --- Variables de Estado ---
     private LanzamientoTejo tejoActual;
     private bool puedeLanzar = true;
+    private enum EstadoLanzamiento { Inactivo, CargandoPoder }
+    private EstadoLanzamiento estado = EstadoLanzamiento.Inactivo;
+    private float valorBarra = 0f;
+    private bool barraSubiendo = true; // Para controlar la OSCILACIÓN
+    private Vector3 puntoDestino;
 
+    // --- Lógica de TurnManager (Sin Cambios) ---
+    #region TurnManager
     void OnEnable()
     {
         if (TurnManager.instance != null)
@@ -39,88 +59,153 @@ public class ControlJugador : MonoBehaviour
 
     void Start()
     {
-        if (TurnManager.instance == null || TurnManager.instance.IsHumanTurn())
+        if (barraDeFuerzaSlider != null)
         {
-            PrepararNuevoTejo();
+            barraDeFuerzaSlider.gameObject.SetActive(false);
+            if (barraDeFuerzaSlider.fillRect != null)
+            {
+                fillImage = barraDeFuerzaSlider.fillRect.GetComponent<Image>();
+                if (fillImage != null)
+                    colorDefaultFill = fillImage.color;
+            }
         }
+        if (TurnManager.instance == null || TurnManager.instance.IsHumanTurn())
+            PrepararNuevoTejo();
     }
 
     void OnTurnChanged(int jugador)
     {
-        if (TurnManager.instance != null && TurnManager.instance.IsHumanTurn())
-        {
-            PrepararNuevoTejo();
-            puedeLanzar = true;
-        }
-        else
-        {
-            puedeLanzar = false;
-        }
-    }
+        // Cada vez que cambia el turno (sea de quien sea),
+        // le quitamos el permiso de lanzar.
+        puedeLanzar = false;
+        tejoActual = null; // También limpiamos la referencia al tejo viejo
 
+        // El GameManager será quien nos llame "AsignarTejoExistente()"
+        // y nos devuelva "puedeLanzar = true" CUANDO sea el momento correcto.
+    }
+    #endregion
+
+    // --- Lógica de Update (CON BARRA OSCILANTE) (Sin Cambios) ---
     void Update()
     {
+        if (GameManagerTejo.instance != null && GameManagerTejo.instance.estadoActual != GameManagerTejo.GameState.Jugando)
+        {
+            return;
+        }
+        // ------------------------------------------
+
+        // El resto de tu código de Update
         if (TurnManager.instance == null || !TurnManager.instance.IsHumanTurn()) return;
         if (!puedeLanzar) return;
 
-        if (Input.GetMouseButtonDown(0))
+        switch (estado)
         {
-            StartCoroutine(LanzarTejoSincronizado());
+            case EstadoLanzamiento.Inactivo:
+                ActualizarPuntoDestino();
+                if (Input.GetMouseButtonDown(0))
+                {
+                    valorBarra = 0f;
+                    barraSubiendo = true; // Empezar subiendo
+                    barraDeFuerzaSlider.gameObject.SetActive(true);
+                    estado = EstadoLanzamiento.CargandoPoder;
+                }
+                break;
+
+            case EstadoLanzamiento.CargandoPoder:
+                // --- La barra OSCILA (sube y baja) ---
+                if (barraSubiendo)
+                {
+                    valorBarra += velocidadBarra * Time.deltaTime;
+                    if (valorBarra >= 1f) { valorBarra = 1f; barraSubiendo = false; }
+                }
+                else
+                {
+                    valorBarra -= velocidadBarra * Time.deltaTime;
+                    if (valorBarra <= 0f) { valorBarra = 0f; barraSubiendo = true; }
+                }
+
+                barraDeFuerzaSlider.value = valorBarra;
+                if (fillImage != null)
+                    fillImage.color = powerGradient.Evaluate(valorBarra);
+
+                // --- Lanzar AL SOLTAR ---
+                if (Input.GetMouseButtonUp(0))
+                {
+                    StartCoroutine(LanzarTejoSincronizado(valorBarra));
+                    estado = EstadoLanzamiento.Inactivo;
+                }
+                break;
         }
     }
 
-    private IEnumerator LanzarTejoSincronizado()
+    private void ActualizarPuntoDestino()
     {
-        // --- Paso 1: Calcular la Dirección con Raycasting ---
         Ray rayo = mainCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hitInfo;
-
         if (Physics.Raycast(rayo, out hitInfo))
-        {
-            Vector3 puntoDestino = hitInfo.point;
-            float fuerza = barraDeFuerza.GetValorFuerza() * multiplicadorDeFuerza;
-
-            Vector3 direccion = puntoDestino - puntoDeLanzamiento.position;
-            Vector3 direccionDeLanzamiento = new Vector3(direccion.x, 0, direccion.z).normalized;
-            direccionDeLanzamiento.y = alturaDelArco;
-
-            if (tejoActual != null)
-            {
-                yield return null; // asegurar inicialización
-                yield return new WaitForFixedUpdate();
-
-                tejoActual.Iniciar(puntoDeLanzamiento.position, direccionDeLanzamiento, fuerza);
-
-                Tejo tejoComp = tejoActual.GetComponent<Tejo>();
-                if (tejoComp != null)
-                    tejoComp.ActivarDeteccion();
-
-                if (GameManagerTejo.instance != null)
-                    GameManagerTejo.instance.RegistrarTejoLanzado();
-
-                // ---  Paso 2: Esperar 0.5s y luego activar cámara ---
-                yield return new WaitForSeconds(0.5f);
-
-                CamaraSeguirTejo camSeg = FindObjectOfType<CamaraSeguirTejo>();
-                if (camSeg != null)
-                    camSeg.SeguirTejo(tejoActual.transform);
-
-                Debug.Log(" [Jugador] Lanzamiento sincronizado completado y cámara activada.");
-                tejoActual = null;
-                puedeLanzar = false;
-            }
-        }
-        else
-        {
-            Debug.Log("Apuntando a un lugar inválido.");
-        }
+            puntoDestino = hitInfo.point;
     }
 
+    // --- Corrutina de Lanzamiento (¡AQUÍ ESTÁ EL CAMBIO!) ---
+    private IEnumerator LanzarTejoSincronizado(float valorLanzamiento) // valorLanzamiento (0-1)
+    {
+        if (tejoActual == null) yield break;
+
+        barraDeFuerzaSlider.gameObject.SetActive(false);
+        if (fillImage != null)
+            fillImage.color = colorDefaultFill;
+
+        // --- INICIO DE LA LÓGICA HÍBRIDA ---
+
+        // 1. Calcular el PODER (Fuerza) - Es LINEAL
+        // La fuerza es directamente el valor de la barra.
+        // 0.0 = mínima, 0.5 = "adecuada", 1.0 = máxima.
+        float poder = valorLanzamiento;
+        float fuerza = poder * multiplicadorDeFuerza;
+
+        // 2. Calcular la PRECISIÓN (Error) - Es PARABÓLICA
+        // Se basa en el punto dulce (0.5).
+        // 'distanciaDelCentro' (0.0 = perfecto, 0.5 = peor)
+        float distanciaDelCentro = Mathf.Abs(valorLanzamiento - 0.5f);
+
+        // 'precision' (error) va de 0.0 (perfecto) a 1.0 (peor).
+        // Se normaliza dividiendo por la distancia máxima (0.5).
+        float precision = distanciaDelCentro / 0.5f;
+
+        // --- FIN DE LA LÓGICA ---
+
+        // --- El resto de tu código (sin cambios) ---
+        Vector3 direccion = puntoDestino - puntoDeLanzamiento.position;
+        Vector3 direccionBase = new Vector3(direccion.x, 0, direccion.z).normalized;
+        direccionBase.y = alturaDelArco;
+
+        float anguloDesviacion = precision * maxDesviacionAngular;
+        if (Random.value < 0.5f) { anguloDesviacion *= -1f; }
+        Vector3 direccionFinal = Quaternion.Euler(0, anguloDesviacion, 0) * direccionBase;
+
+        yield return null;
+        yield return new WaitForFixedUpdate();
+
+        tejoActual.Iniciar(puntoDeLanzamiento.position, direccionFinal, fuerza);
+
+        Tejo tejoComp = tejoActual.GetComponent<Tejo>();
+        if (tejoComp != null)
+            tejoComp.ActivarDeteccion();
+
+        if (GameManagerTejo.instance != null)
+            GameManagerTejo.instance.RegistrarTejoLanzado();
+
+        Debug.Log($" [Jugador] Lanzado! Valor: {valorLanzamiento:F2}, Poder: {poder:F2}, Precisión(Error): {precision:F2}, Fuerza: {fuerza:F2}");
+        tejoActual = null;
+        puedeLanzar = false;
+    }
+
+    // --- Preparar Tejo (Sin Cambios) ---
+    #region PrepararTejo
     public void PrepararNuevoTejo()
     {
         if (tejoActual != null) return;
         if (TurnManager.instance != null && !TurnManager.instance.IsHumanTurn()) return;
-
         if (tejoPrefab != null)
         {
             tejoActual = Instantiate(tejoPrefab, puntoDeLanzamiento.position, puntoDeLanzamiento.rotation);
@@ -132,23 +217,6 @@ public class ControlJugador : MonoBehaviour
     {
         tejoActual = nuevoTejo;
         puedeLanzar = true;
-        Debug.Log("ControlJugador: nuevo tejo asignado correctamente.");
     }
-
-    private IEnumerator EsperarYSeguirCamara(Transform tejo)
-    {
-        yield return new WaitForSeconds(0.5f);
-
-        CamaraSeguirTejo cam = FindObjectOfType<CamaraSeguirTejo>();
-        if (cam != null)
-        {
-            cam.SeguirTejo(tejo);
-            Debug.Log("[IA] Cámara ahora sigue el tejo de la IA.");
-        }
-        else
-        {
-            Debug.LogWarning("[IA] No se encontró una cámara con el script CamaraSeguirTejo.");
-        }
-    }
+    #endregion
 }
-
