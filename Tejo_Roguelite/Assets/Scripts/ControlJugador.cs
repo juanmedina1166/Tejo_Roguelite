@@ -34,7 +34,7 @@ public class ControlJugador : MonoBehaviour
     private bool barraSubiendo = true; // Para controlar la OSCILACIÓN
     private Vector3 puntoDestino;
 
-    // --- Lógica de TurnManager (Sin Cambios) ---
+    // --- Lógica de TurnManager ---
     #region TurnManager
     void OnEnable()
     {
@@ -75,26 +75,19 @@ public class ControlJugador : MonoBehaviour
 
     void OnTurnChanged(int jugador)
     {
-        // Cada vez que cambia el turno (sea de quien sea),
-        // le quitamos el permiso de lanzar.
         puedeLanzar = false;
-        tejoActual = null; // También limpiamos la referencia al tejo viejo
-
-        // El GameManager será quien nos llame "AsignarTejoExistente()"
-        // y nos devuelva "puedeLanzar = true" CUANDO sea el momento correcto.
+        tejoActual = null;
     }
     #endregion
 
-    // --- Lógica de Update (CON BARRA OSCILANTE) (Sin Cambios) ---
+    // --- Lógica de Update (Sin cambios) ---
     void Update()
     {
         if (GameManagerTejo.instance != null && GameManagerTejo.instance.estadoActual != GameManagerTejo.GameState.Jugando)
         {
             return;
         }
-        // ------------------------------------------
 
-        // El resto de tu código de Update
         if (TurnManager.instance == null || !TurnManager.instance.IsHumanTurn()) return;
         if (!puedeLanzar) return;
 
@@ -105,14 +98,13 @@ public class ControlJugador : MonoBehaviour
                 if (Input.GetMouseButtonDown(0))
                 {
                     valorBarra = 0f;
-                    barraSubiendo = true; // Empezar subiendo
+                    barraSubiendo = true;
                     barraDeFuerzaSlider.gameObject.SetActive(true);
                     estado = EstadoLanzamiento.CargandoPoder;
                 }
                 break;
 
             case EstadoLanzamiento.CargandoPoder:
-                // --- La barra OSCILA (sube y baja) ---
                 if (barraSubiendo)
                 {
                     valorBarra += velocidadBarra * Time.deltaTime;
@@ -128,7 +120,6 @@ public class ControlJugador : MonoBehaviour
                 if (fillImage != null)
                     fillImage.color = powerGradient.Evaluate(valorBarra);
 
-                // --- Lanzar AL SOLTAR ---
                 if (Input.GetMouseButtonUp(0))
                 {
                     StartCoroutine(LanzarTejoSincronizado(valorBarra));
@@ -146,8 +137,8 @@ public class ControlJugador : MonoBehaviour
             puntoDestino = hitInfo.point;
     }
 
-    // --- Corrutina de Lanzamiento (¡AQUÍ ESTÁ EL CAMBIO!) ---
-    private IEnumerator LanzarTejoSincronizado(float valorLanzamiento) // valorLanzamiento (0-1)
+    // --- Corrutina de Lanzamiento (AQUÍ AÑADIMOS la cámara con retardo) ---
+    private IEnumerator LanzarTejoSincronizado(float valorLanzamiento)
     {
         if (tejoActual == null) yield break;
 
@@ -155,32 +146,18 @@ public class ControlJugador : MonoBehaviour
         if (fillImage != null)
             fillImage.color = colorDefaultFill;
 
-        // --- INICIO DE LA LÓGICA HÍBRIDA ---
-
-        // 1. Calcular el PODER (Fuerza) - Es LINEAL
-        // La fuerza es directamente el valor de la barra.
-        // 0.0 = mínima, 0.5 = "adecuada", 1.0 = máxima.
         float poder = valorLanzamiento;
         float fuerza = poder * multiplicadorDeFuerza;
 
-        // 2. Calcular la PRECISIÓN (Error) - Es PARABÓLICA
-        // Se basa en el punto dulce (0.5).
-        // 'distanciaDelCentro' (0.0 = perfecto, 0.5 = peor)
         float distanciaDelCentro = Mathf.Abs(valorLanzamiento - 0.5f);
-
-        // 'precision' (error) va de 0.0 (perfecto) a 1.0 (peor).
-        // Se normaliza dividiendo por la distancia máxima (0.5).
         float precision = distanciaDelCentro / 0.5f;
 
-        // --- FIN DE LA LÓGICA ---
-
-        // --- El resto de tu código (sin cambios) ---
         Vector3 direccion = puntoDestino - puntoDeLanzamiento.position;
         Vector3 direccionBase = new Vector3(direccion.x, 0, direccion.z).normalized;
         direccionBase.y = alturaDelArco;
 
         float anguloDesviacion = precision * maxDesviacionAngular;
-        if (Random.value < 0.5f) { anguloDesviacion *= -1f; }
+        if (Random.value < 0.5f) anguloDesviacion *= -1f;
         Vector3 direccionFinal = Quaternion.Euler(0, anguloDesviacion, 0) * direccionBase;
 
         yield return null;
@@ -195,12 +172,26 @@ public class ControlJugador : MonoBehaviour
         if (GameManagerTejo.instance != null)
             GameManagerTejo.instance.RegistrarTejoLanzado();
 
-        Debug.Log($" [Jugador] Lanzado! Valor: {valorLanzamiento:F2}, Poder: {poder:F2}, Precisión(Error): {precision:F2}, Fuerza: {fuerza:F2}");
+        Debug.Log($"[Jugador] Lanzado! Valor: {valorLanzamiento:F2}, Poder: {poder:F2}, Precisión: {precision:F2}, Fuerza: {fuerza:F2}");
+
+        // === NUEVO: Activar cámara diagonal tras 0.5 segundos ===
+        yield return new WaitForSeconds(0.5f);
+        CamaraSeguirTejo camSeg = FindObjectOfType<CamaraSeguirTejo>();
+        if (camSeg != null)
+        {
+            camSeg.SeguirTejo(tejoActual.transform);
+            Debug.Log("[Jugador] Cámara de seguimiento activada tras 0.5s.");
+        }
+        else
+        {
+            Debug.LogWarning("[Jugador] No se encontró CamaraSeguirTejo en la escena.");
+        }
+
         tejoActual = null;
         puedeLanzar = false;
     }
 
-    // --- Preparar Tejo (Sin Cambios) ---
+    // --- Preparar Tejo ---
     #region PrepararTejo
     public void PrepararNuevoTejo()
     {
