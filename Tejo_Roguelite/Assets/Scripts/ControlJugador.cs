@@ -75,20 +75,26 @@ public class ControlJugador : MonoBehaviour
 
     void OnTurnChanged(int jugador)
     {
-        if (TurnManager.instance != null && TurnManager.instance.IsHumanTurn())
-        {
-            PrepararNuevoTejo();
-            puedeLanzar = true;
-            estado = EstadoLanzamiento.Inactivo;
-        }
-        else
-            puedeLanzar = false;
+        // Cada vez que cambia el turno (sea de quien sea),
+        // le quitamos el permiso de lanzar.
+        puedeLanzar = false;
+        tejoActual = null; // También limpiamos la referencia al tejo viejo
+
+        // El GameManager será quien nos llame "AsignarTejoExistente()"
+        // y nos devuelva "puedeLanzar = true" CUANDO sea el momento correcto.
     }
     #endregion
 
     // --- Lógica de Update (CON BARRA OSCILANTE) (Sin Cambios) ---
     void Update()
     {
+        if (GameManagerTejo.instance != null && GameManagerTejo.instance.estadoActual != GameManagerTejo.GameState.Jugando)
+        {
+            return;
+        }
+        // ------------------------------------------
+
+        // El resto de tu código de Update
         if (TurnManager.instance == null || !TurnManager.instance.IsHumanTurn()) return;
         if (!puedeLanzar) return;
 

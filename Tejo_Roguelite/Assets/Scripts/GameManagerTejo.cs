@@ -8,7 +8,7 @@ public class GameManagerTejo : MonoBehaviour
 {
     // Arriba del todo de tu clase GameManagerTejo, pero dentro de ella.
     public enum GameState { Jugando, FinDeRonda, PartidaTerminada }
-    private GameState estadoActual;
+    public GameState estadoActual;
     public static GameManagerTejo instance;
 
     [Header("Puntajes")]
