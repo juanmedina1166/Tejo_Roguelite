@@ -8,12 +8,14 @@ public class CamaraSeguirTejo : MonoBehaviour
     private Transform objetivo;         // Tejo a seguir (se asigna dinámicamente)
 
     [Header("Ajustes de movimiento")]
-    public float suavizado = 5f;        // Cuán suave se mueve la cámara
-    public Vector3 offset = new Vector3(0, 3, -6); // Posición relativa respecto al tejo
+    public float suavizado = 5f;
+
+    //  Ahora vista diagonal: ligeramente detrás y a un lado del tejo
+    public Vector3 offsetDiagonal = new Vector3(-5f, 3f, -5f);
 
     [Header("Detección de movimiento del tejo")]
-    public float velocidadMinima = 0.2f;  // Cuando el tejo esté más lento que esto, se considera detenido
-    public float tiempoParaDetener = 1f;  // Tiempo que debe pasar a esa velocidad antes de volver
+    public float velocidadMinima = 0.2f;
+    public float tiempoParaDetener = 1f;
 
     private Rigidbody rbTejo;
     private bool siguiendo = false;
@@ -23,11 +25,10 @@ public class CamaraSeguirTejo : MonoBehaviour
     {
         if (siguiendo && objetivo != null)
         {
-            // Seguir la posición del tejo con suavizado
-            Vector3 posicionDeseada = objetivo.position + offset;
+            //  Seguir desde la diagonal
+            Vector3 posicionDeseada = objetivo.position + offsetDiagonal;
             transform.position = Vector3.Lerp(transform.position, posicionDeseada, suavizado * Time.deltaTime);
 
-            // Opcional: mira al tejo
             transform.LookAt(objetivo.position);
 
             // Verificar si el tejo ya se detuvo
@@ -38,7 +39,6 @@ public class CamaraSeguirTejo : MonoBehaviour
                     tiempoQuieto += Time.deltaTime;
                     if (tiempoQuieto >= tiempoParaDetener)
                     {
-                        // Dejar de seguir y volver a la posición original
                         StartCoroutine(VolverAPosicionInicial());
                     }
                 }
@@ -55,6 +55,16 @@ public class CamaraSeguirTejo : MonoBehaviour
     /// </summary>
     public void SeguirTejo(Transform nuevoTejo)
     {
+        StartCoroutine(EsperarYSeguir(nuevoTejo)); //  Añadimos retardo antes de activar seguimiento
+    }
+
+    /// <summary>
+    /// Espera 0.5s antes de activar el seguimiento.
+    /// </summary>
+    private IEnumerator EsperarYSeguir(Transform nuevoTejo)
+    {
+        yield return new WaitForSeconds(0.5f); //  retardo antes de seguir
+
         objetivo = nuevoTejo;
         rbTejo = nuevoTejo.GetComponent<Rigidbody>();
         siguiendo = true;
@@ -67,7 +77,6 @@ public class CamaraSeguirTejo : MonoBehaviour
         objetivo = null;
         rbTejo = null;
 
-        // Esperar un momento antes de volver
         yield return new WaitForSeconds(0.5f);
 
         Vector3 posFinal = puntoInicial.position;
@@ -79,7 +88,7 @@ public class CamaraSeguirTejo : MonoBehaviour
 
         while (t < 1f)
         {
-            t += Time.deltaTime * 1.5f; // velocidad de retorno
+            t += Time.deltaTime * 1.5f;
             transform.position = Vector3.Lerp(inicio, posFinal, t);
             transform.rotation = Quaternion.Lerp(inicioRot, rotFinal, t);
             yield return null;

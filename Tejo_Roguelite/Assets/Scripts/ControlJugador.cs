@@ -86,15 +86,22 @@ public class ControlJugador : MonoBehaviour
 
             if (tejoActual != null)
             {
-                // Asegurarnos de que el GameObject y su Awake/Start ya corrieron en este Frame
                 yield return null;
-
-                // Esperamos el próximo FixedUpdate para sincronizar con Física
                 Debug.Log(" [Jugador] Esperando FixedUpdate antes de lanzar...");
                 yield return new WaitForFixedUpdate();
 
+                // === LANZAMIENTO FÍSICO DEL TEJO ===
                 tejoActual.Iniciar(puntoDeLanzamiento.position, direccionDeLanzamiento, fuerza);
 
+                //  PASO 2: ACTIVAR LA CÁMARA DE SEGUIMIENTO 
+                var camara = FindObjectOfType<CamaraSeguirTejo>();
+                if (camara != null)
+                {
+                    camara.SeguirTejo(tejoActual.transform);
+                    Debug.Log(" Cámara ahora siguiendo al tejo.");
+                }
+
+                // Activar detección de colisiones del tejo
                 Tejo tejoComp = tejoActual.GetComponent<Tejo>();
                 if (tejoComp != null)
                     tejoComp.ActivarDeteccion();
