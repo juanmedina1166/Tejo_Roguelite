@@ -150,6 +150,9 @@ public class AIController : MonoBehaviour
         if (tejoComp != null)
             tejoComp.ActivarDeteccion();
 
+        //  Paso adicional: activar cámara de seguimiento luego de 0.5s
+        StartCoroutine(EsperarYSeguirCamara(instancia.transform));
+
         lanzando = false;
     }
 
@@ -171,5 +174,21 @@ public class AIController : MonoBehaviour
 
         Vector3 resultado = velocidadXZ + Vector3.up * velocidadY;
         return resultado;
+    }
+
+    private IEnumerator EsperarYSeguirCamara(Transform tejo)
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        CamaraSeguirTejo cam = FindObjectOfType<CamaraSeguirTejo>();
+        if (cam != null)
+        {
+            cam.SeguirTejo(tejo);
+            Debug.Log("[IA] Cámara ahora sigue el tejo de la IA.");
+        }
+        else
+        {
+            Debug.LogWarning("[IA] No se encontró una cámara con el script CamaraSeguirTejo.");
+        }
     }
 }

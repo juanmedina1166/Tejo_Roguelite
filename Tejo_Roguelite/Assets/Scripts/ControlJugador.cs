@@ -86,22 +86,11 @@ public class ControlJugador : MonoBehaviour
 
             if (tejoActual != null)
             {
-                yield return null;
-                Debug.Log(" [Jugador] Esperando FixedUpdate antes de lanzar...");
+                yield return null; // asegurar inicialización
                 yield return new WaitForFixedUpdate();
 
-                // === LANZAMIENTO FÍSICO DEL TEJO ===
                 tejoActual.Iniciar(puntoDeLanzamiento.position, direccionDeLanzamiento, fuerza);
 
-                //  PASO 2: ACTIVAR LA CÁMARA DE SEGUIMIENTO 
-                var camara = FindObjectOfType<CamaraSeguirTejo>();
-                if (camara != null)
-                {
-                    camara.SeguirTejo(tejoActual.transform);
-                    Debug.Log(" Cámara ahora siguiendo al tejo.");
-                }
-
-                // Activar detección de colisiones del tejo
                 Tejo tejoComp = tejoActual.GetComponent<Tejo>();
                 if (tejoComp != null)
                     tejoComp.ActivarDeteccion();
@@ -109,7 +98,14 @@ public class ControlJugador : MonoBehaviour
                 if (GameManagerTejo.instance != null)
                     GameManagerTejo.instance.RegistrarTejoLanzado();
 
-                Debug.Log(" [Jugador] Lanzamiento sincronizado completado.");
+                // ---  Paso 2: Esperar 0.5s y luego activar cámara ---
+                yield return new WaitForSeconds(0.5f);
+
+                CamaraSeguirTejo camSeg = FindObjectOfType<CamaraSeguirTejo>();
+                if (camSeg != null)
+                    camSeg.SeguirTejo(tejoActual.transform);
+
+                Debug.Log(" [Jugador] Lanzamiento sincronizado completado y cámara activada.");
                 tejoActual = null;
                 puedeLanzar = false;
             }
@@ -137,6 +133,22 @@ public class ControlJugador : MonoBehaviour
         tejoActual = nuevoTejo;
         puedeLanzar = true;
         Debug.Log("ControlJugador: nuevo tejo asignado correctamente.");
+    }
+
+    private IEnumerator EsperarYSeguirCamara(Transform tejo)
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        CamaraSeguirTejo cam = FindObjectOfType<CamaraSeguirTejo>();
+        if (cam != null)
+        {
+            cam.SeguirTejo(tejo);
+            Debug.Log("[IA] Cámara ahora sigue el tejo de la IA.");
+        }
+        else
+        {
+            Debug.LogWarning("[IA] No se encontró una cámara con el script CamaraSeguirTejo.");
+        }
     }
 }
 
