@@ -56,7 +56,7 @@ public class LanzamientoTejo : MonoBehaviour
         // Aplicamos tope de seguridad para evitar valores absurdos
         if (velocidadCalculada.magnitude > maxLaunchSpeed)
         {
-            Debug.LogWarning($"⚠ Vel calculada ({velocidadCalculada.magnitude:F2}) mayor que maxLaunchSpeed ({maxLaunchSpeed}), clampearé.");
+            Debug.LogWarning($" Vel calculada ({velocidadCalculada.magnitude:F2}) mayor que maxLaunchSpeed ({maxLaunchSpeed}), clampearé.");
             velocidadCalculada = velocidadCalculada.normalized * maxLaunchSpeed;
         }
 
