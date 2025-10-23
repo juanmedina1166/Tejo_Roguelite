@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfac6c678bcb5274e80a42c5f8eec2af, type: 3}
+  m_Name: Ultima Chance
+  m_EditorClassIdentifier: 
+  nombre: Ultima Chance
+  descripcion: 'Si vas perdiendo y tu rival esta a 6 puntos de ganar, el puntaje
+    de ese lanzamiento vale por 2
+
+'
+  icono: {fileID: 0}
+  trigger: 0
+  valorNumerico1: 6
+  valorNumerico2: 2

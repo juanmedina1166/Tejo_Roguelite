@@ -105,6 +105,13 @@ public class ControlJugador : MonoBehaviour
                 break;
 
             case EstadoLanzamiento.CargandoPoder:
+                float velocidadActualBarra = velocidadBarra;
+                Habilidad aguardiente = HabilidadManager.instance.GetHabilidad("Aguardiente Doble Filo");
+                if (HabilidadManager.instance.aguardienteActivo && aguardiente != null)
+                {
+                    // Leemos el multiplicador de velocidad (valor1) del asset
+                    velocidadActualBarra *= aguardiente.valorNumerico1; // ej: 1.5f * 0.7f
+                }
                 if (barraSubiendo)
                 {
                     valorBarra += velocidadBarra * Time.deltaTime;
@@ -151,6 +158,18 @@ public class ControlJugador : MonoBehaviour
 
         float distanciaDelCentro = Mathf.Abs(valorLanzamiento - 0.5f);
         float precision = distanciaDelCentro / 0.5f;
+        float desviacionActual = maxDesviacionAngular;
+
+        Habilidad aguardiente = HabilidadManager.instance.GetHabilidad("Aguardiente Doble Filo");
+        if (HabilidadManager.instance.aguardienteActivo && aguardiente != null)
+        {
+            // Leemos el multiplicador de desviación (valor2) del asset
+            desviacionActual *= aguardiente.valorNumerico2; // ej: 15f * 0.5f
+
+            Debug.Log("Desactivando Aguardiente después del tiro.");
+            HabilidadManager.instance.aguardienteActivo = false;
+            HabilidadManager.instance.QuitarHabilidad(aguardiente);
+        }
 
         Vector3 direccion = puntoDestino - puntoDeLanzamiento.position;
         Vector3 direccionBase = new Vector3(direccion.x, 0, direccion.z).normalized;

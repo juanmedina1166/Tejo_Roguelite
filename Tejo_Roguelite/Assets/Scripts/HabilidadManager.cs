@@ -4,8 +4,15 @@ using System; // Necesario para 'Action'
 
 public class HabilidadManager : MonoBehaviour
 {
+    public static HabilidadManager instance;
     [Header("Configuración de la Baraja")]
     [SerializeField] private int tamanoMaximoBaraja = 8; // Límite de habilidades
+
+    // --- BANDERAS PARA HABILIDADES ACTIVAS ---
+    // Estas se resetean después de usarse
+    public bool aguardienteActivo = false;
+    public bool imanBocinActivo = false;
+    public bool tejoLigeroActivo = false; // Para el rival
 
     // Usamos una Lista porque es fácil añadir y quitar elementos.
     private List<Habilidad> barajaDeHabilidades = new List<Habilidad>();
@@ -13,6 +20,20 @@ public class HabilidadManager : MonoBehaviour
     // Evento para notificar a la UI cuando la baraja cambie.
     public static event Action OnBarajaCambio;
 
+    private void Awake() // <-- AÑADIR ESTE MÉTODO
+    {
+        if (instance == null)
+        {
+            instance = this;
+            // Opcional: DontDestroyOnLoad(gameObject); si persiste entre escenas
+        }
+        else
+        {
+            // Si ya existe un GameManager, destruye este nuevo
+            Debug.LogWarning("¡GameManagerTejo DUPLICADO detectado! Destruyendo esta copia.");
+            Destroy(gameObject);
+        }
+    }
     // Método para que otros scripts obtengan una copia segura de la baraja
     public List<Habilidad> GetBaraja()
     {
@@ -22,6 +43,9 @@ public class HabilidadManager : MonoBehaviour
     {
         // Le decimos al sistema de eventos: "Cuando ocurra OnMechaExploded, llama a mi método OnMechaExploded_Handler"
         GameEvents.OnMechaExploded += OnMechaExploded_Handler;
+        GameEvents.OnMoñonaScored += OnMoñonaScored_Handler;
+        GameEvents.OnManoScored += OnManoScored_Handler;
+        GameEvents.OnAimStarted += OnAimStarted_Handler;
     }
 
     private void OnDisable()
@@ -29,6 +53,9 @@ public class HabilidadManager : MonoBehaviour
         // Le decimos al sistema de eventos que ya no necesitamos que nos avise.
         // Esto es muy importante para evitar errores.
         GameEvents.OnMechaExploded -= OnMechaExploded_Handler;
+        GameEvents.OnMoñonaScored -= OnMoñonaScored_Handler;
+        GameEvents.OnManoScored -= OnManoScored_Handler;
+        GameEvents.OnAimStarted -= OnAimStarted_Handler;
     }
 
     /// <summary>
@@ -42,6 +69,14 @@ public class HabilidadManager : MonoBehaviour
         {
             Debug.LogWarning("¡La baraja está llena! No se pudo añadir: " + nuevaHabilidad.nombre);
             return false; // No se pudo añadir
+        }
+
+        if (nuevaHabilidad.nombre == "Fiebre del Oro")
+        {
+            nuevaHabilidad = Instantiate(nuevaHabilidad);
+            // ¡OJO! Aquí usamos valorNumerico1 DEL ASSET para setear el contador inicial
+            // Asumimos que pusiste '3' en el asset.
+            nuevaHabilidad.valorNumerico1 = nuevaHabilidad.valorNumerico1;
         }
 
         barajaDeHabilidades.Add(nuevaHabilidad);
@@ -62,6 +97,11 @@ public class HabilidadManager : MonoBehaviour
         {
             barajaDeHabilidades.Remove(habilidadParaQuitar);
             Debug.Log(habilidadParaQuitar.nombre + " fue quitada de la baraja.");
+
+            if (!Application.isEditor) // Evita errores en el editor
+            {
+                Destroy(habilidadParaQuitar);
+            }
 
             // Avisamos a la UI que la baraja ha cambiado.
             OnBarajaCambio?.Invoke();
@@ -93,6 +133,94 @@ public class HabilidadManager : MonoBehaviour
                     GameManagerTejo.instance.SumarPuntos(idDelGanador, puntosExtra);
                 }
             }
+        }
+        else if (idDelGanador == 1) // Si la IA (jugador 1) hizo mecha
+        {
+            Habilidad vengativa = GetHabilidad("Mecha Vengativa"); // Obtenemos el asset
+            if (vengativa != null)
+            {
+                Debug.Log("¡HABILIDAD: Mecha Vengativa!");
+                GameManagerTejo.instance.SumarPuntos(0, (int)vengativa.valorNumerico1);  // Ganas valor1
+                GameManagerTejo.instance.RestarPuntos(1, (int)vengativa.valorNumerico2); // IA pierde valor2
+            }
+        }
+    }
+    private void OnManoScored_Handler(int playerID)
+    {
+        Habilidad mano = GetHabilidad("El Mano"); // Obtenemos el asset
+        if (playerID == 0 && mano != null)
+        {
+            Debug.Log("¡HABILIDAD: El Mano!");
+            GameManagerTejo.instance.SumarPuntos(0, (int)mano.valorNumerico1); // Sumas valor1
+        }
+    }
+    private void OnMoñonaScored_Handler(int playerID)
+    {
+        Habilidad monona = GetHabilidad("La moñona va con toda"); // Obtenemos el asset
+        if (playerID == 0 && monona != null)
+        {
+            Debug.Log("¡HABILIDAD: La moñona va con toda!");
+            GameManagerTejo.instance.SumarPuntos(0, (int)monona.valorNumerico1); // Sumas valor1
+        }
+    }
+    private void OnAimStarted_Handler()
+    {
+        if (aguardienteActivo)
+        {
+            // Aquí puedes llamar a un script de cámara para que tiemble
+            // Ejemplo: CameraShaker.instance.Shake(0.5f, 0.1f);
+            Debug.Log("Pantalla tiembla por Aguardiente");
+        }
+    }
+    /// <summary>
+    /// Comprueba si el jugador tiene una habilidad por su nombre.
+    /// </summary>
+    public bool TieneHabilidad(string nombreHabilidad)
+    {
+        foreach (var habilidad in barajaDeHabilidades)
+        {
+            if (habilidad.nombre == nombreHabilidad)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Devuelve una habilidad de la baraja (para leer/modificar sus valores, como contadores).
+    /// </summary>
+    public Habilidad GetHabilidad(string nombreHabilidad)
+    {
+        foreach (var habilidad in barajaDeHabilidades)
+        {
+            if (habilidad.nombre == nombreHabilidad)
+            {
+                return habilidad;
+            }
+        }
+        return null; // Devuelve null si no la tiene
+    }
+    public void ActivarHabilidad(Habilidad habilidad)
+    {
+        // Lógica para activar la habilidad y consumirla
+        Debug.Log("Activando: " + habilidad.nombre);
+
+        switch (habilidad.nombre)
+        {
+            case "Aguardiente Doble Filo":
+                aguardienteActivo = true;
+                break;
+            case "Imán de Bocín":
+                imanBocinActivo = true;
+                break;
+            case "Tejo Ligero":
+                tejoLigeroActivo = true; // El script del rival revisará esto
+                break;
+            case "Falsa Alarma":
+                // Llama al GameManager para que instancie las mechas falsas
+                GameManagerTejo.instance.ColocarMechasFalsas();
+                break;
         }
     }
 }

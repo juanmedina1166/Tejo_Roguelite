@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dfac6c678bcb5274e80a42c5f8eec2af, type: 3}
-  m_Name: TejodePlomo
+  m_Name: Aguardiente Doble Filo
   m_EditorClassIdentifier: 
-  nombre: Tejo de Plomo
-  descripcion: Hace al tejo mas pesado
+  nombre: Aguardiente doble filo
+  descripcion: "Tomas un \"shot\". Tu pr\xF3ximo lanzamiento tiene potencia y precisi\xF3n
+    aumentadas, pero la pantalla se tambalea ligeramente.\r"
   icono: {fileID: 0}
   trigger: 0
-  valorNumerico1: 0
-  valorNumerico2: 0
+  valorNumerico1: 0.7
+  valorNumerico2: 0.5

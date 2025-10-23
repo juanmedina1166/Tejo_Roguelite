@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dfac6c678bcb5274e80a42c5f8eec2af, type: 3}
-  m_Name: MechaExplosiva
+  m_Name: Mecha Vengativa
   m_EditorClassIdentifier: 
-  nombre: Mecha Explosiva
-  descripcion: Las mechas que explotas valen +3 puntos.
+  nombre: Mecha Vengativa
+  descripcion: " El jugador puede elegir una mecha en la cancha. Si el rival explota
+    esa mecha, autom\xE1ticamente el jugador gana 2 puntos y la IA con 1.\r"
   icono: {fileID: 0}
   trigger: 0
-  valorNumerico1: 0
-  valorNumerico2: 0
+  valorNumerico1: 2
+  valorNumerico2: 1

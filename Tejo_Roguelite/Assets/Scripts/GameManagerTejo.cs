@@ -48,6 +48,16 @@ public class GameManagerTejo : MonoBehaviour
     private int idJugadorMecha = -1;
     private int puntosBaseMecha = 0;
 
+    [Header("Habilidades")]
+    [Tooltip("El prefab de la mecha señuelo para 'Falsa Alarma'")]
+    [SerializeField] private GameObject prefabMechaFalsa;
+    [Tooltip("Un array de Transforms donde pueden aparecer las mechas falsas")]
+    [SerializeField] private Transform[] posicionesMechasFalsas;
+
+    private bool bumeranExitoso = false;
+    private int tirosExtraEsteTurno = 0;
+    private int rondasJugadas = 0; // Para "Chancleteè el motor"
+
     // Añade esta línea en la sección de Headers, junto a las otras referencias de UI.
     [Header("Pantallas")]
     public RewardScreen rewardScreen; // ¡Arrastra tu UIManager aquí en el Inspector!
@@ -61,6 +71,19 @@ public class GameManagerTejo : MonoBehaviour
     {
         StartCoroutine(CrearTejoConDelay(0.2f));
         estadoActual = GameState.Jugando; // Empezamos la partida en el estado "Jugando"
+        if (HabilidadManager.instance.TieneHabilidad("Amaneciste con suerte"))
+        {
+            Habilidad hab = HabilidadManager.instance.GetHabilidad("Amaneciste con suerte");
+
+            // Leemos la probabilidad (valor1) del asset
+            if (UnityEngine.Random.Range(0f, 100f) <= hab.valorNumerico1)
+            {
+                Debug.Log("¡HABILIDAD: Amaneciste con suerte!");
+                // Leemos los tiros extra (valor2) del asset
+                tirosExtraEsteTurno = (int)hab.valorNumerico2;
+            }
+            HabilidadManager.instance.QuitarHabilidad(hab);
+        }
     }
 
     private void OnEnable()
@@ -89,8 +112,38 @@ public class GameManagerTejo : MonoBehaviour
 
     public void SumarPuntos(int jugadorID, int puntos)
     {
-        Debug.Log($"Jugador {jugadorID + 1} gana {puntos} puntos");
-        puntajes[jugadorID] += puntos;
+        float multiplicador = 1; // Cambiamos a float para multiplicadores
+
+        if (jugadorID == 0)
+        {
+            // Habilidad: "Ultima Chance"
+            Habilidad ultima = HabilidadManager.instance.GetHabilidad("Ultima Chance");
+            if (ultima != null)
+            {
+                int puntajeIA = puntajes[1];
+                // Leemos los puntos de ventaja (valor1) y el multiplicador (valor2) del asset
+                if (puntajes[0] < puntajeIA && (puntajeMaximo - puntajeIA) <= ultima.valorNumerico1)
+                {
+                    Debug.Log("¡HABILIDAD: Ultima Chance!");
+                    multiplicador *= ultima.valorNumerico2;
+                }
+            }
+
+            // Habilidad: "Fiebre del Oro"
+            Habilidad fiebre = HabilidadManager.instance.GetHabilidad("Fiebre del Oro");
+            if (fiebre != null && fiebre.valorNumerico1 > 0)
+            {
+                Debug.Log("¡HABILIDAD: Fiebre del Oro!");
+                // Leemos el multiplicador (valor2) del asset
+                multiplicador *= fiebre.valorNumerico2;
+            }
+        }
+
+        int puntosFinales = Mathf.RoundToInt(puntos * multiplicador); // Redondeamos al final
+        Debug.Log($"Jugador {jugadorID + 1} gana {puntosFinales} puntos (base: {puntos}, mult: {multiplicador}x)");
+        puntajes[jugadorID] += puntosFinales;
+        puntajeTextos[jugadorID].text = $"J{jugadorID + 1}: {puntajes[jugadorID]}";
+
         if (puntajeTextos != null && jugadorID >= 0 && jugadorID < puntajeTextos.Length)
             puntajeTextos[jugadorID].text = $"J{jugadorID + 1}: {puntajes[jugadorID]}";
 
@@ -98,6 +151,7 @@ public class GameManagerTejo : MonoBehaviour
         {
             Debug.Log($"¡El jugador {jugadorID + 1} ha ganado el juego!");
         }
+        
     }
 
     public void RestarPuntos(int jugadorID, int puntos)
@@ -139,6 +193,7 @@ public class GameManagerTejo : MonoBehaviour
             int idDelGanador = tejoMasCercano.jugadorID;
             Debug.Log($"Punto por mano para el Jugador {idDelGanador + 1}! Distancia: {distanciaMinima}");
             SumarPuntos(idDelGanador, 1);
+            GameEvents.TriggerManoScored(idDelGanador);
         }
     }
     public void AvisarCambioTurno()
@@ -156,6 +211,16 @@ public class GameManagerTejo : MonoBehaviour
 
     public void TejoTermino(Tejo tejo)
     {
+        Debug.Log($"[DEBUG] ¡TejoTermino llamado por {tejo.gameObject.name}!");
+        if (HabilidadManager.instance.imanBocinActivo)
+        {
+            Debug.Log("Desactivando Imán de Bocín después del tiro.");
+            HabilidadManager.instance.imanBocinActivo = false;
+            // Lo quitamos de la baraja
+            Habilidad iman = HabilidadManager.instance.GetHabilidad("Imán de Bocín");
+            if (iman != null) HabilidadManager.instance.QuitarHabilidad(iman);
+        }
+        bumeranExitoso = false; // Reseteamos la bandera de bumerán
         tejosDeLaRonda.Add(tejo);
         Debug.Log($"El tejo de {TurnManager.instance.CurrentTurn()} se ha detenido.");
         // 1. Comprobar dónde aterrizó el tejo
@@ -221,6 +286,57 @@ public class GameManagerTejo : MonoBehaviour
             MarcarMechaExplotada(); // Esto previene que se dé el punto de 'mano'
         }
 
+        if (idJugadorActual == 0) // Solo para el jugador humano
+        {
+            // Lógica "Fiebre del Oro":
+            Habilidad fiebre = HabilidadManager.instance.GetHabilidad("Fiebre del Oro");
+            if (fiebre != null && fiebre.valorNumerico1 > 0)
+            {
+                // Si el tejo no puntuó (no está en bocín Y no hizo score)
+                // Y ASUMIMOS que `tejo.EstaEnLaCancha()` es un bool que tienes en tu script Tejo.cs
+                // Si no lo tienes, una aproximación es `!scoreOcurrido && !estaEmbocinado`
+                // bool fallo = !scoreOcurrido && !estaEmbocinado; 
+                // Por ahora, usaremos tu descripción "si el tejo no se queda en la cancha"
+                // Necesitarás un trigger que detecte si el tejo se fue "fuera de límites".
+
+                // --- Simplificación: "Fallo" = no sumar puntos ---
+                bool falloElTiro = !scoreOcurrido && !estaEmbocinado;
+                if (falloElTiro)
+                {
+                    Debug.Log("¡Fiebre del Oro perdida por fallo!");
+                    HabilidadManager.instance.QuitarHabilidad(fiebre);
+                }
+                else
+                {
+                    // Si acertó, descontamos un uso
+                    fiebre.valorNumerico1--;
+                    Debug.Log($"Fiebre del Oro: {fiebre.valorNumerico1} lanzamientos restantes.");
+                    if (fiebre.valorNumerico1 <= 0)
+                    {
+                        HabilidadManager.instance.QuitarHabilidad(fiebre);
+                    }
+                }
+            }
+
+            // Lógica "El Tejo Bumerán":
+            // Si falló el tiro (misma condición de antes)
+            if (!scoreOcurrido && !estaEmbocinado)
+            {
+                Habilidad bumeran = HabilidadManager.instance.GetHabilidad("El Tejo Bumerán");
+                if (bumeran != null)
+                {
+                    // Leemos la probabilidad (valor1) del asset
+                    if (UnityEngine.Random.Range(0f, 100f) <= bumeran.valorNumerico1)
+                    {
+                        Debug.Log("¡HABILIDAD: Tejo Bumerán! Tienes otro intento.");
+                        bumeranExitoso = true;
+                        HabilidadManager.instance.QuitarHabilidad(bumeran);
+                        Destroy(tejo.gameObject);
+                    }
+                }
+            }
+        }
+
         // 5. Resetear las variables del TURNO
         mechaExplotadaEnTurno = false;
         idJugadorMecha = -1;
@@ -241,11 +357,28 @@ public class GameManagerTejo : MonoBehaviour
         // Usamos la variable que ya tenías para el delay.
         Debug.Log($"Esperando {delayCambioTurno} segundos antes de cambiar de turno...");
         yield return new WaitForSeconds(delayCambioTurno);
-
-        // Después de la pausa, le decimos al TurnManager que es el turno del siguiente.
-        if (TurnManager.instance != null)
+        if (bumeranExitoso)
         {
-            TurnManager.instance.NextTurn();
+            Debug.Log("Bumerán: Devolviendo tejo al jugador.");
+            bumeranExitoso = false;
+            CrearTejoJugador();
+            if (blocker != null) blocker.SetActive(false); // Desbloquear input
+        }
+        // Si tenemos un tiro extra (Amaneciste con suerte) y es el jugador 0
+        else if (tirosExtraEsteTurno > 0 && TurnManager.instance.CurrentPlayerIndex() == 0)
+        {
+            Debug.Log("Usando tiro extra (Amaneciste con suerte).");
+            tirosExtraEsteTurno--;
+            CrearTejoJugador();
+            if (blocker != null) blocker.SetActive(false);
+        }
+        else
+        {
+            // Después de la pausa, le decimos al TurnManager que es el turno del siguiente.
+            if (TurnManager.instance != null)
+            {
+                TurnManager.instance.NextTurn();
+            }
         }
     }
 
@@ -320,6 +453,29 @@ public class GameManagerTejo : MonoBehaviour
         // Cada vez que hay un cambio de turno, incrementamos nuestro contador.
         turnosJugadosEnRonda++;
 
+        if (nuevoJugadorID == 0) // Es el turno del jugador humano
+        {
+            // 'rondasJugadas' se incrementa en RutinaFinDeRonda
+            if (rondasJugadas >= 3)
+            {
+                Habilidad chanclete = HabilidadManager.instance.GetHabilidad("Chancleteè el motor");
+                if (chanclete != null)
+                {
+                    // Leemos las rondas a esperar (valor1) del asset
+                    if (rondasJugadas >= (int)chanclete.valorNumerico1)
+                    {
+                        if (puntajes[0] < puntajes[1])
+                        {
+                            Debug.Log("¡HABILIDAD: Chancleteè el motor!");
+                            // Leemos los puntos a sumar (valor2) del asset
+                            SumarPuntos(0, (int)chanclete.valorNumerico2);
+                            HabilidadManager.instance.QuitarHabilidad(chanclete);
+                        }
+                    }
+                }
+            }
+        }
+
         // Ahora, la condición para terminar la ronda es:
         // 1. Que el turno vuelva a ser del jugador 1.
         // 2. Y que se haya jugado al menos un turno en esta ronda.
@@ -336,6 +492,9 @@ public class GameManagerTejo : MonoBehaviour
     {
         estadoActual = GameState.FinDeRonda;
         Debug.Log("FIN DE LA RONDA. Calculando puntos...");
+
+        rondasJugadas++; // Incrementamos el contador de rondas jugadas
+        Debug.Log($"Ronda {rondasJugadas} terminada.");
 
         // Esperamos un par de segundos para que el jugador vea el resultado
         yield return new WaitForSeconds(2f);
@@ -435,5 +594,18 @@ public class GameManagerTejo : MonoBehaviour
     public void MarcarMechaExplotada()
     {
         mechaExplotadaEnRonda = true;
+    }
+    public void ColocarMechasFalsas()
+    {
+        if (prefabMechaFalsa == null || posicionesMechasFalsas.Length == 0)
+        {
+            Debug.LogWarning("Prefab de 'Mecha Falsa' o sus posiciones no están asignados en el GameManager!");
+            return;
+        }
+
+        // Coloca una mecha señuelo en una de las posiciones definidas
+        int index = UnityEngine.Random.Range(0, posicionesMechasFalsas.Length);
+        Instantiate(prefabMechaFalsa, posicionesMechasFalsas[index].position, Quaternion.identity);
+        Debug.Log("Mecha Falsa colocada.");
     }
 }

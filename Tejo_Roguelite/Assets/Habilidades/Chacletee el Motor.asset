@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dfac6c678bcb5274e80a42c5f8eec2af, type: 3}
-  m_Name: TejoAlado
+  m_Name: Chacletee el Motor
   m_EditorClassIdentifier: 
-  nombre: TejoAlado
-  descripcion: EMPTY
+  nombre: Chancletee el Motor
+  descripcion: Despues de 3 turnos, si vas perdiendo sumas 3 puntos
   icono: {fileID: 0}
   trigger: 0
-  valorNumerico1: 0
-  valorNumerico2: 0
+  valorNumerico1: 3
+  valorNumerico2: 3

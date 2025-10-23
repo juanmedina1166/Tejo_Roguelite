@@ -189,6 +189,8 @@ MonoBehaviour:
   spawnJugador: {fileID: 362065680}
   bocin: {fileID: 1444986090}
   bocinTrigger: {fileID: 1444986091}
+  prefabMechaFalsa: {fileID: 0}
+  posicionesMechasFalsas: []
   rewardScreen: {fileID: 1031856686}
 --- !u!4 &18470584
 Transform:
@@ -1702,6 +1704,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tamanoMaximoBaraja: 4
+  aguardienteActivo: 0
+  imanBocinActivo: 0
+  tejoLigeroActivo: 0
 --- !u!1 &1444986086
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfac6c678bcb5274e80a42c5f8eec2af, type: 3}
+  m_Name: Falsa Alarma
+  m_EditorClassIdentifier: 
+  nombre: Falsa Alarma
+  descripcion: "Colocas una \"mecha se\xF1uelo\" en la cancha. Si el rival le pega,
+    \xE9ste suelta confeti y no le da puntos.\r\n"
+  icono: {fileID: 0}
+  trigger: 0
+  valorNumerico1: 0
+  valorNumerico2: 0

@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dfac6c678bcb5274e80a42c5f8eec2af, type: 3}
-  m_Name: SegundaOportunidad
+  m_Name: Iman de Bocin
   m_EditorClassIdentifier: 
-  nombre: SegundaOportunidad
-  descripcion: 
+  nombre: Iman del Bocin
+  descripcion: "En tu pr\xF3ximo tiro, el boc\xEDn genera un leve campo magn\xE9tico
+    que atrae tu tejo. No garantiza el punto, pero ayuda a corregir peque\xF1os errores."
   icono: {fileID: 0}
   trigger: 0
   valorNumerico1: 0
