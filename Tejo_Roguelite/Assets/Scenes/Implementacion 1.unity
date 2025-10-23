@@ -3282,8 +3282,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d151d8511cead1a4fa13307eef3f3275, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nivelActual: 0
-  dificultadActual: 0
+  nivelActual: 5
 --- !u!4 &1957143516
 Transform:
   m_ObjectHideFlags: 0
