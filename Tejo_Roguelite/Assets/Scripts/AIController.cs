@@ -41,6 +41,19 @@ public class AIController : MonoBehaviour
             TurnManager.instance.OnTurnChanged -= OnTurnChanged;
     }
 
+    void Start()
+    {
+        PersonajeIAData datos = GameLevelManager.instance.ObtenerDatosIA();
+
+        chanceFallar = datos.chanceFallar;
+        decisionDelay = datos.decisionDelay;
+        rangoFuerzaPercent = datos.rangoFuerza;
+        missFactorMin = datos.missFactor.x;
+        missFactorMax = datos.missFactor.y;
+
+        Debug.Log($"[IA] Iniciado personaje: {datos.nombre} ({datos.dificultad})");
+    }
+
     void RebuildActiveList()
     {
         objetivosActivos.Clear();
@@ -190,5 +203,11 @@ public class AIController : MonoBehaviour
         {
             Debug.LogWarning("[IA] No se encontró una cámara con el script CamaraSeguirTejo.");
         }
+    }
+
+    public void ConfigurarDificultad(string nivel)
+    {
+        // Aquí puedes ajustar variables internas según la dificultad
+        Debug.Log($"{name} configurada a dificultad {nivel}");
     }
 }
