@@ -69,8 +69,6 @@ public class ControlJugador : MonoBehaviour
                     colorDefaultFill = fillImage.color;
             }
         }
-        if (TurnManager.instance == null || TurnManager.instance.IsHumanTurn())
-            PrepararNuevoTejo();
     }
 
     void OnTurnChanged(int jugador)

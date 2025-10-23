@@ -30,6 +30,8 @@ public class GameManagerTejo : MonoBehaviour
     [SerializeField] private GameObject tejoJugadorPrefab;
     [SerializeField] private Transform spawnJugador;
 
+    [SerializeField] private GameObject tejoIAPrefab;
+
     private int tirosRealizados = 0;
     private int turnosJugadosEnRonda = 0;
     private int cambiosDeTurno = 0;
@@ -69,20 +71,41 @@ public class GameManagerTejo : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(CrearTejoConDelay(0.2f));
-        estadoActual = GameState.Jugando; // Empezamos la partida en el estado "Jugando"
-        if (HabilidadManager.instance.TieneHabilidad("Amaneciste con suerte"))
+        if (SaveManager.DoesSaveExist())
         {
-            Habilidad hab = HabilidadManager.instance.GetHabilidad("Amaneciste con suerte");
-
-            // Leemos la probabilidad (valor1) del asset
-            if (UnityEngine.Random.Range(0f, 100f) <= hab.valorNumerico1)
+            // MODO CONTINUAR
+            Debug.Log("Cargando partida guardada...");
+            GameData data = SaveManager.LoadGame();
+            if (data != null)
             {
-                Debug.Log("¡HABILIDAD: Amaneciste con suerte!");
-                // Leemos los tiros extra (valor2) del asset
-                tirosExtraEsteTurno = (int)hab.valorNumerico2;
+                CargarPartidaGuardada(data);
             }
-            HabilidadManager.instance.QuitarHabilidad(hab);
+            else
+            {
+                // Error al cargar, empezar de cero
+                Debug.LogError("¡Error al cargar GameData! Empezando nueva partida.");
+                EmpezarSeleccionInicial();
+            }
+        }
+        else
+        {
+            // MODO NUEVA PARTIDA (como lo tenías)
+            EmpezarSeleccionInicial();
+        }
+    }
+    private void EmpezarSeleccionInicial()
+    {
+        estadoActual = GameState.PartidaTerminada;
+        if (rewardScreen != null)
+        {
+            // El RewardScreen llamará a 'ReiniciarParaNuevaPartida'
+            rewardScreen.MostrarRecompensas();
+        }
+        else
+        {
+            Debug.LogError("¡RewardScreen no está asignado!");
+            // Si no hay reward screen, forzamos inicio
+            ReiniciarParaNuevaPartida();
         }
     }
 
@@ -405,41 +428,33 @@ public class GameManagerTejo : MonoBehaviour
     // ======================================================
     private void CrearTejoJugador()
     {
-        // Elimina cualquier tejo viejo que haya quedado inactivo
-        foreach (Tejo viejo in FindObjectsOfType<Tejo>())
+        if (tejoJugadorPrefab == null || spawnJugador == null)
         {
-            if (!viejo.gameObject.activeInHierarchy)
-                Destroy(viejo.gameObject);
+            Debug.LogWarning(" No se pudo crear el tejo: prefab o spawn no asignado.");
+            return;
         }
 
-        // Evita duplicar si ya existe un tejo activo
-        Tejo tejoExistente = FindObjectOfType<Tejo>();
-        if (tejoExistente != null) return;
+        GameObject nuevoTejo = Instantiate(tejoJugadorPrefab, spawnJugador.position, spawnJugador.rotation);
+        nuevoTejo.GetComponent<Tejo>().jugadorID = 0;
+        Debug.Log(" Nuevo tejo del jugador creado.");
 
-        if (tejoJugadorPrefab != null && spawnJugador != null)
+        // Asignar el nuevo tejo al ControlJugador (para que pueda lanzarlo)
+        var controlJugador = FindObjectOfType<ControlJugador>();
+        if (controlJugador != null)
         {
-            GameObject nuevoTejo = Instantiate(tejoJugadorPrefab, spawnJugador.position, spawnJugador.rotation);
-            nuevoTejo.GetComponent<Tejo>().jugadorID = 0;
-            Debug.Log(" Nuevo tejo del jugador creado.");
-
-            //  Asignar el nuevo tejo al ControlJugador (para que pueda lanzarlo)
-            var controlJugador = FindObjectOfType<ControlJugador>();
-            if (controlJugador != null)
-            {
-                var lanzador = nuevoTejo.GetComponent<LanzamientoTejo>();
-                controlJugador.AsignarTejoExistente(lanzador);
-            }
-
-            //  Marcarlo como "listo para disparar"
-            var scriptTejo = nuevoTejo.GetComponent<Tejo>();
-            if (scriptTejo != null)
-            {
-                scriptTejo.ResetTejo(); // este método debería dejarlo listo (posición, física desactivada, etc.)
-            }
+            var lanzador = nuevoTejo.GetComponent<LanzamientoTejo>();
+            controlJugador.AsignarTejoExistente(lanzador);
         }
         else
         {
-            Debug.LogWarning(" No se pudo crear el tejo: prefab o spawn no asignado.");
+            Debug.LogError("¡No se encontró 'ControlJugador' en la escena para asignarle el tejo!");
+        }
+
+        // Marcarlo como "listo para disparar"
+        var scriptTejo = nuevoTejo.GetComponent<Tejo>();
+        if (scriptTejo != null)
+        {
+            scriptTejo.ResetTejo();
         }
     }
 
@@ -563,22 +578,49 @@ public class GameManagerTejo : MonoBehaviour
     {
         Debug.Log("Reiniciando el juego para una nueva partida...");
 
-        // 1. Reiniciar puntajes
+        // 1. Reiniciar puntajes y UI
         for (int i = 0; i < puntajes.Length; i++)
         {
             puntajes[i] = 0;
+            if (puntajeTextos[i] != null) // Actualizamos la UI a 0
+                puntajeTextos[i].text = $"J{i + 1}: 0";
         }
-        // Actualizar la UI a 0
-        // Necesitarás un método que redibuje los puntajes, vamos a asumir que lo tienes.
-        // ActualizarPuntajeUI(); 
 
+        // 2. Limpiar la cancha y estados de ronda
         LimpiarCancha();
+        if (bocinTrigger != null)
+            bocinTrigger.LimpiarLista(); // Limpia el trigger del bocin
 
-        // 3. Reiniciar el turno al jugador 1
+        tejosDeLaRonda.Clear();
+        mechaExplotadaEnRonda = false;
+        turnosJugadosEnRonda = 0;
+        rondasJugadas = 0; // ¡Importante reiniciar el contador de rondas!
+
+        // 3. Reiniciar el turno al JUGADOR 0 (Humano)
+        // Tu log muestra "Turno forzado al Jugador 1", aquí lo corregimos.
         TurnManager.instance.SetTurn(1);
 
         // 4. Volver al estado de "Jugando"
         estadoActual = GameState.Jugando;
+
+        // 5. ¡LA PARTE QUE FALTABA! Crear el tejo para el jugador
+        // Esto reemplaza el 'CrearTejoConDelay' que tenías en Start()
+        CrearTejoJugador();
+
+        // 6. Mover la lógica de "Amaneciste con suerte" aquí
+        tirosExtraEsteTurno = 0; // Reseteamos por si acaso
+        Habilidad hab = HabilidadManager.instance.GetHabilidad("Amaneciste con suerte");
+        if (hab != null)
+        {
+            // Leemos la probabilidad (valor1) del asset
+            if (UnityEngine.Random.Range(0f, 100f) <= hab.valorNumerico1)
+            {
+                Debug.Log("¡HABILIDAD: Amaneciste con suerte!");
+                // Leemos los tiros extra (valor2) del asset
+                tirosExtraEsteTurno = (int)hab.valorNumerico2;
+            }
+            HabilidadManager.instance.QuitarHabilidad(hab);
+        }
 
     }
     public void RegistrarMecha(int jugadorID, int puntosBase)
@@ -607,5 +649,102 @@ public class GameManagerTejo : MonoBehaviour
         int index = UnityEngine.Random.Range(0, posicionesMechasFalsas.Length);
         Instantiate(prefabMechaFalsa, posicionesMechasFalsas[index].position, Quaternion.identity);
         Debug.Log("Mecha Falsa colocada.");
+    }
+    /// <summary>
+    /// Recolecta TODOS los datos del estado actual y los guarda en el JSON.
+    /// Llama a esto desde tu botón "Guardar y Salir" del menú de pausa.
+    /// </summary>
+    public void GuardarPartidaActual()
+    {
+        Debug.Log("Guardando partida...");
+        GameData data = new GameData();
+
+        // 1. Recolectar datos
+        data.nivelActual = GameLevelManager.instance.nivelActual;
+        data.puntajes = this.puntajes;
+        data.rondasJugadas = this.rondasJugadas;
+        data.mechaExplotadaEnRonda = this.mechaExplotadaEnRonda;
+        data.jugadorActual = TurnManager.instance.CurrentTurn();
+
+        // 2. Recolectar datos de habilidades (usando la nueva función)
+        data.barajaHabilidades = HabilidadManager.instance.GetDatosDeBaraja();
+
+        // 3. Guardar los tejos en la cancha
+        data.tejosEnCancha = new List<TejoData>();
+        foreach (Tejo tejo in tejosDeLaRonda) // 'tejosDeLaRonda' es tu variable
+        {
+            if (tejo != null) // Asegurarse de que el tejo no fue destruido
+            {
+                data.tejosEnCancha.Add(new TejoData(
+                    tejo.jugadorID,
+                    tejo.transform.position,
+                    tejo.transform.rotation
+                ));
+            }
+        }
+
+        // 4. Usar el SaveManager
+        SaveManager.SaveGame(data);
+    }
+
+    /// <summary>
+    /// Restaura todo el estado del juego desde un objeto GameData.
+    /// Es llamado por Start() si existe un guardado.
+    /// </summary>
+    private void CargarPartidaGuardada(GameData data)
+    {
+        // 1. Cargar Nivel
+        GameLevelManager.instance.nivelActual = data.nivelActual;
+        // (Tu AIController y GameLevelManager parecen leer el nivel
+        // en sus propios Start/Awake, así que esto debería funcionar)
+
+        // 2. Cargar Puntajes y UI
+        puntajes = data.puntajes;
+        for (int i = 0; i < puntajes.Length; i++)
+        {
+            if (i < puntajeTextos.Length && puntajeTextos[i] != null)
+                puntajeTextos[i].text = $"J{i + 1}: {puntajes[i]}";
+        }
+
+        // 3. Cargar Estado de Ronda
+        rondasJugadas = data.rondasJugadas;
+        mechaExplotadaEnRonda = data.mechaExplotadaEnRonda;
+
+        // 4. Cargar Baraja (usando la nueva función)
+        HabilidadManager.instance.CargarBarajaDesdeDatos(data.barajaHabilidades);
+
+        // 5. Cargar Tejos en Cancha (re-instanciarlos)
+        LimpiarCancha();
+        tejosDeLaRonda.Clear();
+        foreach (TejoData tejoData in data.tejosEnCancha)
+        {
+            // Elige el prefab correcto según el ID
+            GameObject prefab = (tejoData.jugadorID == 0) ? tejoJugadorPrefab : tejoIAPrefab;
+
+            if (prefab != null)
+            {
+                GameObject tejoGO = Instantiate(prefab, tejoData.position, tejoData.rotation);
+                Tejo tejoScript = tejoGO.GetComponent<Tejo>();
+                tejoScript.jugadorID = tejoData.jugadorID;
+
+                // (Necesitarás una función en 'Tejo.cs' para que se quede quieto
+                // y no active físicas al spawnear)
+                // ej: tejoScript.SetAsStationary(); 
+
+                tejosDeLaRonda.Add(tejoScript);
+            }
+        }
+
+        // 6. Forzar el turno
+        estadoActual = GameState.Jugando;
+        TurnManager.instance.SetTurn(data.jugadorActual);
+
+        // 7. IMPORTANTE: Crear el tejo para el jugador si es su turno
+        if (data.jugadorActual == 1) // 1 = Humano
+        {
+            CrearTejoJugador();
+            if (blocker != null) blocker.SetActive(false); // Activar input
+        }
+        // Si es 2 (IA), el AIController.OnTurnChanged se activará solo.
     }
 }

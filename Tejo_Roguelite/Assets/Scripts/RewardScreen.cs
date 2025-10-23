@@ -35,6 +35,7 @@ public class RewardScreen : MonoBehaviour
             GameObject cartaGO = Instantiate(prefabCartaHabilidad, opcionesContainer);
 
             // Rellenar los datos visuales de la carta
+            cartaGO.transform.Find("FondoImage").GetComponent<Image>().sprite = habilidadOpcion.fondo;
             cartaGO.transform.Find("NombreText").GetComponent<TextMeshProUGUI>().text = habilidadOpcion.nombre;
             cartaGO.transform.Find("IconoImage").GetComponent<Image>().sprite = habilidadOpcion.icono;
 

@@ -8,6 +8,9 @@ public class HabilidadManager : MonoBehaviour
     [Header("Configuración de la Baraja")]
     [SerializeField] private int tamanoMaximoBaraja = 8; // Límite de habilidades
 
+    [Tooltip("Arrastra AQUÍ TODOS tus ScriptableObjects de Habilidad (de la carpeta Assets)")]
+    [SerializeField] private List<Habilidad> todasLasHabilidadesMaestra; // <-- Esta es la lista maestra
+
     // --- BANDERAS PARA HABILIDADES ACTIVAS ---
     // Estas se resetean después de usarse
     public bool aguardienteActivo = false;
@@ -222,5 +225,61 @@ public class HabilidadManager : MonoBehaviour
                 GameManagerTejo.instance.ColocarMechasFalsas();
                 break;
         }
+    }
+    /// <summary>
+    /// Recoge los datos de la baraja actual para guardarlos.
+    /// </summary>
+    public List<HabilidadData> GetDatosDeBaraja()
+    {
+        List<HabilidadData> datos = new List<HabilidadData>();
+        foreach (var habilidad in barajaDeHabilidades)
+        {
+            // Guardamos el nombre y su valorNumerico1 (para contadores)
+            datos.Add(new HabilidadData(habilidad.nombre, habilidad.valorNumerico1));
+        }
+        return datos;
+    }
+
+    /// <summary>
+    /// Limpia la baraja y la carga desde los datos guardados.
+    /// </summary>
+    public void CargarBarajaDesdeDatos(List<HabilidadData> datos)
+    {
+        // Limpiamos la baraja actual (instancias)
+        foreach (var hab in barajaDeHabilidades)
+        {
+            if (!Application.isEditor) // Previene error en editor
+                Destroy(hab);
+        }
+        barajaDeHabilidades.Clear();
+
+        // Validamos que la lista maestra esté llena
+        if (todasLasHabilidadesMaestra == null || todasLasHabilidadesMaestra.Count == 0)
+        {
+            Debug.LogError("¡'Todas Las Habilidades Maestra' no está asignada en HabilidadManager! No se puede cargar la baraja.");
+            return;
+        }
+
+        // Volvemos a crear la baraja
+        foreach (HabilidadData data in datos)
+        {
+            // 1. Encontrar el asset original en la lista maestra
+            Habilidad habAsset = todasLasHabilidadesMaestra.Find(h => h.nombre == data.nombre);
+
+            if (habAsset != null)
+            {
+                // 2. Crear una INSTANCIA (copia) para no modificar el asset
+                Habilidad nuevaHabilidad = Instantiate(habAsset);
+                nuevaHabilidad.name = habAsset.name; // Quita el "(Clone)" del nombre
+
+                // 3. Restaurar el estado guardado (el contador)
+                nuevaHabilidad.valorNumerico1 = data.valorNumerico1;
+
+                barajaDeHabilidades.Add(nuevaHabilidad);
+            }
+        }
+
+        // Avisamos a la UI que actualice las cartas
+        OnBarajaCambio?.Invoke();
     }
 }

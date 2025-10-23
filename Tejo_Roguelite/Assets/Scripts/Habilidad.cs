@@ -35,6 +35,7 @@ public class Habilidad : ScriptableObject
     [TextArea(3, 5)]
     public string descripcion;
     public Sprite icono;
+    public Sprite fondo;
 
     [Header("Lógica de la Habilidad")]
     public TriggerType trigger;
