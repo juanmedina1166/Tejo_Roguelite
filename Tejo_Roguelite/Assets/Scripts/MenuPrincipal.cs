@@ -4,63 +4,72 @@ using UnityEngine.SceneManagement;
 
 public class MenuPrincipal : MonoBehaviour
 {
-    // Arrastra tu botón "Continuar" a este campo en el Inspector
+    [Header("Botones del menú principal")]
     public Button botonContinuar;
-
-    // Arrastra tu botón "Nueva Partida"
     public Button botonNuevaPartida;
-
-    // Arrastra tu botón "Salir"
+    public Button botonTienda;
+    public Button botonVolver;
     public Button botonSalir;
 
-    // El nombre de la escena de tu juego
-    public string escenaJuego = "GameScene"; // ¡Cambia esto por el nombre de tu escena!
+    [Header("Paneles")]
+    public GameObject panelMenuPrincipal;
+    public GameObject panelTienda;
+
+    [Header("Configuración de escena")]
+    public string escenaJuego = "GameScene"; // Cambia según tu proyecto
 
     void Start()
     {
-        // 1. Revisa si existe un archivo de guardado
         ActualizarBotonContinuar();
 
-        // 2. Asigna las funciones a los clics de los botones
         botonContinuar.onClick.AddListener(ContinuarPartida);
         botonNuevaPartida.onClick.AddListener(NuevaPartida);
+        botonTienda.onClick.AddListener(Tienda);
+        botonVolver.onClick.AddListener(CerrarTienda);
         botonSalir.onClick.AddListener(SalirJuego);
+
+        // Al iniciar, nos aseguramos de que solo el menú principal esté activo
+        panelMenuPrincipal.SetActive(true);
+        panelTienda.SetActive(false);
     }
 
     void ActualizarBotonContinuar()
     {
-        // Esta es la lógica principal que pediste:
-        // Activa o desactiva el botón si el archivo existe.
-        if (SaveManager.DoesSaveExist())
-        {
-            botonContinuar.interactable = true;
-        }
-        else
-        {
-            botonContinuar.interactable = false;
-        }
+        botonContinuar.interactable = SaveManager.DoesSaveExist();
     }
 
     public void ContinuarPartida()
     {
-        // Simplemente carga la escena del juego.
-        // El GameManager de esa escena se encargará de cargar los datos.
         SceneManager.LoadScene(escenaJuego);
     }
 
     public void NuevaPartida()
     {
-        // 1. Borra cualquier partida guardada anterior
         SaveManager.DeleteSave();
-
-        // 2. Carga la escena del juego
         SceneManager.LoadScene(escenaJuego);
+    }
+
+    public void Tienda()
+    {
+        // Oculta el menú principal y muestra el panel de tienda
+        panelMenuPrincipal.SetActive(false);
+        panelTienda.SetActive(true);
+
+        Debug.Log("Abriendo la tienda de habilidades...");
+    }
+
+    public void CerrarTienda()
+    {
+        // Oculta la tienda y vuelve al menú principal
+        panelTienda.SetActive(false);
+        panelMenuPrincipal.SetActive(true);
+
+        Debug.Log("Cerrando la tienda y volviendo al menú principal...");
     }
 
     public void SalirJuego()
     {
+        Debug.Log("Saliendo del juego...");
         Application.Quit();
-        // (Si estás en el editor de Unity, esto no hará nada.
-        // Usa Debug.Log("Saliendo del juego...") para probar)
     }
 }

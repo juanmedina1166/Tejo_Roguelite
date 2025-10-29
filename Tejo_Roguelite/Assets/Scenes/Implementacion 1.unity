@@ -1652,7 +1652,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dineroTotal: 0
-  factorConversion: 10
+  factorVictoria: 10
+  factorDerrota: 1
 --- !u!4 &565354350
 Transform:
   m_ObjectHideFlags: 0
@@ -4776,7 +4777,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d151d8511cead1a4fa13307eef3f3275, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nivelActual: 1
+  nivelActual: 0
   nivelesParaGanarRun: 3
   pantallaVictoriaDelRun: {fileID: 643383279}
   pantallaDerrotaDelRun: {fileID: 1304135363}
