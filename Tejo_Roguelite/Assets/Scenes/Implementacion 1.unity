@@ -1622,6 +1622,52 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 512918587}
   m_CullTransparentMesh: 1
+--- !u!1 &565354348
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 565354350}
+  - component: {fileID: 565354349}
+  m_Layer: 0
+  m_Name: MetaProgressionManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &565354349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 565354348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c31ff1f0544d084e85f99d00247035c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dineroTotal: 0
+  factorConversion: 10
+--- !u!4 &565354350
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 565354348}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 911.98517, y: 307.369, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &593878359 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7004182040195549447, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
@@ -4730,7 +4776,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d151d8511cead1a4fa13307eef3f3275, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nivelActual: 0
+  nivelActual: 1
   nivelesParaGanarRun: 3
   pantallaVictoriaDelRun: {fileID: 643383279}
   pantallaDerrotaDelRun: {fileID: 1304135363}
@@ -4994,6 +5040,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1165834572089115041, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
+      propertyPath: m_Size.z
+      value: 7.1080046
+      objectReference: {fileID: 0}
+    - target: {fileID: 1165834572089115041, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
+      propertyPath: m_Center.z
+      value: -6.0980487
+      objectReference: {fileID: 0}
+    - target: {fileID: 3173047229538947855, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
+      propertyPath: m_Size.z
+      value: 7.1210976
+      objectReference: {fileID: 0}
+    - target: {fileID: 3173047229538947855, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
+      propertyPath: m_Center.z
+      value: 6.056639
+      objectReference: {fileID: 0}
     - target: {fileID: 3711807732785436581, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Name
       value: Cancha
@@ -5073,3 +5135,4 @@ SceneRoots:
   - {fileID: 899726838}
   - {fileID: 1957143516}
   - {fileID: 1687624239469671741}
+  - {fileID: 565354350}

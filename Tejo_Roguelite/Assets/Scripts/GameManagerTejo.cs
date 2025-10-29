@@ -595,35 +595,33 @@ public class GameManagerTejo : MonoBehaviour
     private void TerminarPartida(int ganadorID)
     {
         estadoActual = GameState.PartidaTerminada;
-        bool runHaTerminado = false; // Para saber si mostramos la recompensa normal
+        bool runHaTerminado = false;
 
-        if (ganadorID == 0) // 1. Condición de Victoria (Humano gana la partida)
+        bool jugadorGano = (ganadorID == 0);
+        Debug.Log(jugadorGano ? "¡PARTIDA TERMINADA! ¡Ganaste!" : "¡PARTIDA TERMINADA! ¡Perdiste!");
+
+        if (GameLevelManager.instance != null)
         {
-            Debug.Log("¡PARTIDA TERMINADA! ¡Ganaste!");
-            if (GameLevelManager.instance != null)
+            if (MetaProgressionManager.instance != null)
             {
-                // Registra la victoria y nos dice si el "Run" se completó
+                int puntajeJugador = puntajes[0];
+                MetaProgressionManager.instance.ConvertirPuntajeEnDinero(puntajeJugador, jugadorGano);
+            }
+            else
+            {
+                Debug.LogWarning("No se encontró MetaProgressionManager en la escena.");
+            }
+
+            if (jugadorGano)
                 runHaTerminado = GameLevelManager.instance.RegistrarVictoria();
-            }
-        } // <-- ¡¡LA LLAVE DE CIERRE FALTABA AQUÍ!!
-        else // 2. Condición de Derrota (IA gana la partida)
-        {
-            Debug.Log("¡PARTIDA TERMINADA! ¡Perdiste!");
-            if (GameLevelManager.instance != null)
-            {
-                // Registra la derrota (el Run se reinicia o reintenta)
+            else
                 GameLevelManager.instance.RegistrarDerrota();
-            }
         }
 
-        // Si el Run se terminó (porque ganaste 3 partidas),
-        // GameLevelManager ya mostró la pantalla de victoria final.
         if (runHaTerminado)
         {
             Debug.Log("¡EL RUN HA TERMINADO! No se muestra el reward screen normal.");
         }
-        // Si el run NO ha terminado, mostramos la pantalla de recompensa normal
-        // para que puedas elegir habilidades e ir al siguiente nivel.
         else if (rewardScreen != null)
         {
             rewardScreen.MostrarRecompensas();
