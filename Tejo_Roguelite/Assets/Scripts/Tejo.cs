@@ -18,6 +18,10 @@ public class Tejo : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (GameManagerTejo.instance != null && GameManagerTejo.instance.estadoActual != GameManagerTejo.GameState.Jugando)
+        {
+            return;
+        }
         if (!fueLanzado || haTerminado)
             return;
 

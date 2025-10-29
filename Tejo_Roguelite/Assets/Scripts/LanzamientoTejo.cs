@@ -139,6 +139,7 @@ public class LanzamientoTejo : MonoBehaviour
                     // Leemos el rango (valor2) y la fuerza (valor1) del asset
                     if (distancia < iman.valorNumerico2 && distancia > 0.1f)
                     {
+                        Debug.Log("¡HABILIDAD: Imán de Bocín! Atrayendo tejo.");
                         float fuerzaIman = iman.valorNumerico1 / (distancia + 1f);
                         rb.AddForce(direccionAlBocin.normalized * fuerzaIman, ForceMode.Acceleration);
                     }

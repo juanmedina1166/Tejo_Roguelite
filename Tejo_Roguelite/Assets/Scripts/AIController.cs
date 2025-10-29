@@ -10,6 +10,7 @@ public class AIController : MonoBehaviour
 
     [Header("Objetivos")]
     [Tooltip("Lista de objetivos en el tablero. La IA elegirá uno al azar.")]
+    public Transform objetivoPrincipal;
     public List<Transform> objetivos = new List<Transform>();
 
     private List<Transform> objetivosActivos = new List<Transform>();
@@ -90,6 +91,10 @@ public class AIController : MonoBehaviour
 
     void OnTurnChanged(int jugador)
     {
+        if (GameManagerTejo.instance != null && GameManagerTejo.instance.estadoActual != GameManagerTejo.GameState.Jugando)
+        {
+            return;
+        }
         if (jugador == 2 && !lanzando)
         {
             StartCoroutine(RealizarLanzamientoIA());
@@ -110,25 +115,34 @@ public class AIController : MonoBehaviour
         RebuildActiveList();
 
         // --- Elegir objetivo ---
-        Transform elegido = null;
-        Vector3 centroPos;
+        Transform objetivoElegido = null;
 
         if (objetivosActivos.Count > 0)
         {
-            elegido = objetivosActivos[Random.Range(0, objetivosActivos.Count)];
-            centroPos = elegido.position;
-            Debug.Log($"AIController: Objetivo elegido '{elegido.name}' en {elegido.position}");
+            // 1. Prioridad: Una mecha activa
+            objetivoElegido = objetivosActivos[Random.Range(0, objetivosActivos.Count)];
+            Debug.Log($"AIController: Objetivo elegido (Mecha) '{objetivoElegido.name}' en {objetivoElegido.position}");
         }
-        else
+        else if (objetivoPrincipal != null)
         {
-            centroPos = puntoDeLanzamiento.position + puntoDeLanzamiento.forward * 5f;
-            Debug.Log("AIController: No hay objetivos activos, apuntando área general.");
+            // 2. Plan B: El Bocín (objetivo principal)
+            objetivoElegido = objetivoPrincipal;
+            Debug.Log("AIController: No hay mechas activas, apuntando al objetivo principal (Bocín).");
         }
 
         // --- Definir punto de lanzamiento ---
-        Vector3 objetivo = (elegido != null)
-            ? new Vector3(elegido.position.x, puntoDeLanzamiento.position.y, elegido.position.z)
-            : centroPos;
+        Vector3 objetivo; // 'objetivo' ahora se llama 'puntoDestino' en el original, lo cambiamos a 'objetivo'
+
+        if (objetivoElegido != null)
+        {
+            objetivo = objetivoElegido.position;
+        }
+        else
+        {
+            // 3. Plan C: (Fallo de seguridad) Apuntar área general
+            objetivo = puntoDeLanzamiento.position + puntoDeLanzamiento.forward * 5f;
+            Debug.Log("AIController: No hay objetivos, apuntando área general.");
+        }
 
         // --- Fallo intencional ---
         if (Random.value < chanceFallar)

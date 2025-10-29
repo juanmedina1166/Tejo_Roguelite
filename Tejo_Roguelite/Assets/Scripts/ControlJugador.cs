@@ -107,6 +107,7 @@ public class ControlJugador : MonoBehaviour
                 Habilidad aguardiente = HabilidadManager.instance.GetHabilidad("Aguardiente Doble Filo");
                 if (HabilidadManager.instance.aguardienteActivo && aguardiente != null)
                 {
+                    Debug.Log("¡HABILIDAD: Aguardiente! Acelerando barra.");
                     // Leemos el multiplicador de velocidad (valor1) del asset
                     velocidadActualBarra *= aguardiente.valorNumerico1; // ej: 1.5f * 0.7f
                 }

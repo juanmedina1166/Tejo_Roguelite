@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using TMPro;
 using System.Collections.Generic;
+using static GameManagerTejo;
 
 public class GameManagerTejo : MonoBehaviour
 {
@@ -63,6 +64,30 @@ public class GameManagerTejo : MonoBehaviour
     // Añade esta línea en la sección de Headers, junto a las otras referencias de UI.
     [Header("Pantallas")]
     public RewardScreen rewardScreen; // ¡Arrastra tu UIManager aquí en el Inspector!
+    [Header("Gestión de Mechas (Objetivos)")]
+    [Tooltip("Arrastra aquí tu Prefab de Mecha (el que tiene Objetivo.cs)")]
+    [SerializeField] private GameObject prefabMecha;
+
+    [Tooltip("Cuántas mechas quieres que aparezcan en cada ronda")]
+    [SerializeField] private int cantidadDeMechas = 3;
+
+    [Tooltip("El tamaño del área donde pueden aparecer (X, Z) alrededor del bocín")]
+    [SerializeField] private Vector2 areaDeSpawn = new Vector2(5f, 5f);
+
+    [Tooltip("La altura (Y) a la que deben aparecer las mechas")]
+    [SerializeField] private float alturaDeSpawn = 0.5f;
+
+    // Lista para guardar las mechas que creamos
+    private List<GameObject> mechasActivas = new List<GameObject>();
+
+    [Tooltip("La capa física (Layer) donde está el suelo de la cancha. El raycast buscará aquí.")]
+    [SerializeField] private LayerMask canchaLayerMask; // <-- AÑADE ESTA LÍNEA
+
+    // Renombra esta variable para que sea más claro su propósito
+    [Tooltip("Cuánto 'flotará' la mecha por encima del suelo inclinado")]
+    [SerializeField] private float alturaSobreElSuelo = 0.1f;
+    [Tooltip("El radio alrededor del bocín donde NO aparecerán mechas")]
+    [SerializeField] private float radioZonaMuerta = 1.5f;
 
     private void Awake()
     {
@@ -135,6 +160,10 @@ public class GameManagerTejo : MonoBehaviour
 
     public void SumarPuntos(int jugadorID, int puntos)
     {
+        if (estadoActual == GameState.PartidaTerminada)
+        {
+            return;
+        }
         float multiplicador = 1; // Cambiamos a float para multiplicadores
 
         if (jugadorID == 0)
@@ -162,19 +191,21 @@ public class GameManagerTejo : MonoBehaviour
             }
         }
 
-        int puntosFinales = Mathf.RoundToInt(puntos * multiplicador); // Redondeamos al final
+        int puntosFinales = Mathf.RoundToInt(puntos * multiplicador);
         Debug.Log($"Jugador {jugadorID + 1} gana {puntosFinales} puntos (base: {puntos}, mult: {multiplicador}x)");
         puntajes[jugadorID] += puntosFinales;
-        puntajeTextos[jugadorID].text = $"J{jugadorID + 1}: {puntajes[jugadorID]}";
 
         if (puntajeTextos != null && jugadorID >= 0 && jugadorID < puntajeTextos.Length)
             puntajeTextos[jugadorID].text = $"J{jugadorID + 1}: {puntajes[jugadorID]}";
 
         if (puntajes[jugadorID] >= puntajeMaximo)
         {
+            // ¡Se acaba el juego INMEDIATAMENTE!
+            // No esperamos a que la IA lance.
             Debug.Log($"¡El jugador {jugadorID + 1} ha ganado el juego!");
+            TerminarPartida(jugadorID);
         }
-        
+
     }
 
     public void RestarPuntos(int jugadorID, int puntos)
@@ -380,6 +411,10 @@ public class GameManagerTejo : MonoBehaviour
         // Usamos la variable que ya tenías para el delay.
         Debug.Log($"Esperando {delayCambioTurno} segundos antes de cambiar de turno...");
         yield return new WaitForSeconds(delayCambioTurno);
+        if (estadoActual == GameState.PartidaTerminada)
+        {
+            yield break;
+        }
         if (bumeranExitoso)
         {
             Debug.Log("Bumerán: Devolviendo tejo al jugador.");
@@ -514,57 +549,82 @@ public class GameManagerTejo : MonoBehaviour
         // Esperamos un par de segundos para que el jugador vea el resultado
         yield return new WaitForSeconds(2f);
 
+        // --- ¡NUEVO! CLÁUSULA DE GUARDA ---
+        // Comprobamos si el último tiro (Mecha/Embocinado) ya hizo ganar a alguien.
+        // Si es así, no calculamos "mano" y simplemente terminamos.
+        if (estadoActual == GameState.PartidaTerminada)
+        {
+            yield break; // Detiene la corrutina aquí
+        }
+
+        // Si nadie ha ganado, calculamos el punto de "mano"
         DarPuntoAlMasCercano();
 
-        // --- LÓGICA DE PUNTUACIÓN DE FIN DE RONDA ---
-        // Aquí es donde calculas puntos como el de "mano" (el más cercano)
-        // Nota: Necesitarás una forma de obtener las posiciones de los tejos lanzados.
-        // DarPuntoAlMasCercano(...); 
-
-        // --- COMPROBAR SI LA PARTIDA TERMINÓ ---
-        bool partidaGanada = false;
-        for (int i = 0; i < puntajes.Length; i++)
+        // --- ¡NUEVO! SEGUNDA CLÁUSULA DE GUARDA ---
+        // Comprobamos si el punto de "mano" hizo ganar a alguien.
+        if (estadoActual == GameState.PartidaTerminada)
         {
-            if (puntajes[i] >= puntajeMaximo)
-            {
-                partidaGanada = true;
-                break;
-            }
+            yield break; // Detiene la corrutina aquí
         }
 
-        if (partidaGanada)
-        {
-            TerminarPartida();
-        }
-        else
-        {
-            // Si nadie ha ganado, empezamos la siguiente ronda
-            Debug.Log("Nadie ha ganado todavía. Iniciando siguiente ronda.");
-            LimpiarCancha();
-            tejosDeLaRonda.Clear();
+        // --- LÓGICA DE VICTORIA ANTIGUA ELIMINADA ---
+        // (El 'for' loop que buscaba al ganador se ha borrado)
 
-            if (bocinTrigger != null)
-                bocinTrigger.LimpiarLista();
 
-            mechaExplotadaEnRonda = false;
-            estadoActual = GameState.Jugando;
-            turnosJugadosEnRonda = 0;
-            yield return null;
-            CrearTejoJugador();
-            // Aquí puedes añadir lógica para limpiar los tejos viejos de la cancha.
-        }
+        // Si llegamos aquí, es porque NADIE ha ganado todavía.
+        Debug.Log("Nadie ha ganado todavía. Iniciando siguiente ronda.");
+        LimpiarCancha();
+        RespawnMechas(); // Asegúrate de que esto esté aquí
+        tejosDeLaRonda.Clear();
+
+        if (bocinTrigger != null)
+            bocinTrigger.LimpiarLista();
+
+        mechaExplotadaEnRonda = false;
+        estadoActual = GameState.Jugando;
+        turnosJugadosEnRonda = 0;
+        yield return null;
+        CrearTejoJugador();
+        // Aquí puedes añadir lógica para limpiar los tejos viejos de la cancha.
     }
 
     /// <summary>
     /// Se llama cuando un jugador alcanza el puntaje máximo.
     /// </summary>
-    private void TerminarPartida()
+    /// <param name="ganadorID">0 = Humano, 1 = IA</param>
+    private void TerminarPartida(int ganadorID)
     {
         estadoActual = GameState.PartidaTerminada;
-        Debug.Log("¡PARTIDA TERMINADA! Mostrando recompensas.");
+        bool runHaTerminado = false; // Para saber si mostramos la recompensa normal
 
-        // ¡La conexión clave! Llamamos a la pantalla de recompensas.
-        if (rewardScreen != null)
+        if (ganadorID == 0) // 1. Condición de Victoria (Humano gana la partida)
+        {
+            Debug.Log("¡PARTIDA TERMINADA! ¡Ganaste!");
+            if (GameLevelManager.instance != null)
+            {
+                // Registra la victoria y nos dice si el "Run" se completó
+                runHaTerminado = GameLevelManager.instance.RegistrarVictoria();
+            }
+        } // <-- ¡¡LA LLAVE DE CIERRE FALTABA AQUÍ!!
+        else // 2. Condición de Derrota (IA gana la partida)
+        {
+            Debug.Log("¡PARTIDA TERMINADA! ¡Perdiste!");
+            if (GameLevelManager.instance != null)
+            {
+                // Registra la derrota (el Run se reinicia o reintenta)
+                GameLevelManager.instance.RegistrarDerrota();
+            }
+        }
+
+        // Si el Run se terminó (porque ganaste 3 partidas),
+        // GameLevelManager ya mostró la pantalla de victoria final.
+        if (runHaTerminado)
+        {
+            Debug.Log("¡EL RUN HA TERMINADO! No se muestra el reward screen normal.");
+        }
+        // Si el run NO ha terminado, mostramos la pantalla de recompensa normal
+        // para que puedas elegir habilidades e ir al siguiente nivel.
+        else if (rewardScreen != null)
         {
             rewardScreen.MostrarRecompensas();
         }
@@ -572,7 +632,7 @@ public class GameManagerTejo : MonoBehaviour
         {
             Debug.LogError("RewardScreen no está asignado en el GameManager!");
         }
-    }
+    } // <-- La llave que cierra la función
 
     public void ReiniciarParaNuevaPartida()
     {
@@ -588,6 +648,7 @@ public class GameManagerTejo : MonoBehaviour
 
         // 2. Limpiar la cancha y estados de ronda
         LimpiarCancha();
+        RespawnMechas();
         if (bocinTrigger != null)
             bocinTrigger.LimpiarLista(); // Limpia el trigger del bocin
 
@@ -621,8 +682,8 @@ public class GameManagerTejo : MonoBehaviour
             }
             HabilidadManager.instance.QuitarHabilidad(hab);
         }
+    } // <-- ¡¡LA LLAVE DE CIERRE DE LA FUNCIÓN FALTABA AQUÍ!!
 
-    }
     public void RegistrarMecha(int jugadorID, int puntosBase)
     {
         Debug.Log($"Registrando mecha para Jugador {jugadorID + 1} con {puntosBase} puntos base.");
@@ -746,5 +807,99 @@ public class GameManagerTejo : MonoBehaviour
             if (blocker != null) blocker.SetActive(false); // Activar input
         }
         // Si es 2 (IA), el AIController.OnTurnChanged se activará solo.
+    }
+
+    /// <summary>
+    /// Limpia las mechas viejas, crea nuevas en posiciones aleatorias
+    /// y actualiza la lista de objetivos de la IA.
+    /// </summary>
+    private void RespawnMechas()
+    {
+        // 1. Limpiar las mechas de la ronda anterior
+        foreach (GameObject mecha in mechasActivas)
+        {
+            Destroy(mecha);
+        }
+        mechasActivas.Clear();
+
+        // 2. Encontrar la IA y limpiar sus objetivos
+        AIController ai = FindObjectOfType<AIController>();
+        if (ai != null)
+        {
+            ai.objetivos.Clear();
+        }
+
+        if (prefabMecha == null || bocin == null)
+        {
+            Debug.LogError("¡PrefabMecha o Bocin no están asignados en el GameManagerTejo!");
+            return;
+        }
+
+        Vector3 centroBocin = bocin.position;
+        Vector2 bocinXZ = new Vector2(centroBocin.x, centroBocin.z);
+        Debug.Log($"[GameManager] Spawneando {cantidadDeMechas} mechas...");
+
+        // 3. Crear nuevas mechas
+        for (int i = 0; i < cantidadDeMechas; i++)
+        {
+            int intentos = 0;
+            bool puntoValidoEncontrado = false;
+
+            // Intentaremos hasta 20 veces encontrar un punto válido
+            while (intentos < 20 && !puntoValidoEncontrado)
+            {
+                intentos++;
+
+                // Calcular una posición X, Z aleatoria
+                float posX = Random.Range(-areaDeSpawn.x / 2, areaDeSpawn.x / 2);
+                float posZ = Random.Range(-areaDeSpawn.y / 2, areaDeSpawn.y / 2);
+
+                // --- ¡NUEVA COMPROBACIÓN DE ZONA MUERTA! ---
+                Vector2 puntoSpawnXZ = new Vector2(centroBocin.x + posX, centroBocin.z + posZ);
+
+                // Calculamos la distancia horizontal al bocín
+                float distancia = Vector2.Distance(puntoSpawnXZ, bocinXZ);
+
+                // Si está muy cerca, ignoramos este punto y probamos de nuevo
+                if (distancia < radioZonaMuerta)
+                {
+                    continue; // Vuelve al inicio del "while"
+                }
+                // --- FIN DE LA COMPROBACIÓN ---
+
+
+                // Si llegamos aquí, el punto está fuera de la zona muerta.
+                // Ahora lanzamos el rayo para encontrar el suelo.
+                Vector3 rayStartPos = new Vector3(centroBocin.x + posX, centroBocin.y + 20f, centroBocin.z + posZ);
+
+                RaycastHit hit;
+                if (Physics.Raycast(rayStartPos, Vector3.down, out hit, 50f, canchaLayerMask))
+                {
+                    Vector3 spawnPos = hit.point + new Vector3(0, alturaSobreElSuelo, 0);
+                    Quaternion spawnRotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+
+                    GameObject nuevaMecha = Instantiate(prefabMecha, spawnPos, spawnRotation);
+                    mechasActivas.Add(nuevaMecha);
+
+                    if (ai != null)
+                    {
+                        ai.objetivos.Add(nuevaMecha.transform);
+                    }
+
+                    puntoValidoEncontrado = true; // ¡Éxito! Salimos del "while"
+                }
+                else
+                {
+                    // El raycast falló (cayó fuera de la cancha), probamos de nuevo
+                    continue;
+                }
+            } // Fin del while
+
+            if (!puntoValidoEncontrado)
+            {
+                Debug.LogWarning($"No se pudo encontrar un punto válido para la mecha {i + 1} tras 20 intentos.");
+            }
+
+        } // Fin del for
     }
 }
