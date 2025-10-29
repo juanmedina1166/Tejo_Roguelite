@@ -26,7 +26,12 @@ public class AIController : MonoBehaviour
     public float decisionDelay = 1.0f;
     [Range(0f, 1f)]
     public float chanceFallar = 0.15f;
-    public float missFactorMin = 1.2f, missFactorMax = 2.0f;
+
+    [Tooltip("Probabilidad de que la IA apunte al Bocín aunque haya Mechas activas.")]
+    [Range(0f, 1f)]
+    public float chanceApuntarBocin = 0.25f;
+
+    public float missFactorMin = 1.2f, missFactorMax = 2.0f; // <-- Solo una vez
 
     bool lanzando = false;
 
@@ -132,20 +137,34 @@ public class AIController : MonoBehaviour
         RebuildActiveList();
 
         // --- Elegir objetivo ---
+        // --- Elegir objetivo ---
         Transform objetivoElegido = null;
 
-        if (objetivosActivos.Count > 0)
+        // Comprobar si hay mechas activas
+        if (objetivosActivos.Count > 0 && objetivoPrincipal != null)
         {
-            // 1. Prioridad: Una mecha activa
-            objetivoElegido = objetivosActivos[Random.Range(0, objetivosActivos.Count)];
-            Debug.Log($"AIController: Objetivo elegido (Mecha) '{objetivoElegido.name}' en {objetivoElegido.position}");
+            // Si hay mechas, decidimos si vamos por ellas o por el bocín
+            if (Random.value < chanceApuntarBocin)
+            {
+                // DECISIÓN: Ir por el Bocín (Chance estratégica)
+                objetivoElegido = objetivoPrincipal;
+                Debug.Log($"AIController: Hay mechas, pero DECIDIÓ ir por el Bocín (Chance: {chanceApuntarBocin:P0}).");
+            }
+            else
+            {
+                // DECISIÓN: Ir por una Mecha (Normal)
+                objetivoElegido = objetivosActivos[Random.Range(0, objetivosActivos.Count)];
+                Debug.Log($"AIController: Objetivo elegido (Mecha) '{objetivoElegido.name}' en {objetivoElegido.position}");
+            }
         }
+        // Si no hay mechas (o bocín), usamos el fallback
         else if (objetivoPrincipal != null)
         {
-            // 2. Plan B: El Bocín (objetivo principal)
+            // FALLBACK: No hay mechas, DEBE ir por el Bocín
             objetivoElegido = objetivoPrincipal;
             Debug.Log("AIController: No hay mechas activas, apuntando al objetivo principal (Bocín).");
         }
+        // (El Plan C de seguridad se mantiene si todo lo demás falla)
 
         // --- Definir punto de lanzamiento ---
         Vector3 objetivo; // 'objetivo' ahora se llama 'puntoDestino' en el original, lo cambiamos a 'objetivo'

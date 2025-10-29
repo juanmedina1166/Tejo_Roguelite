@@ -19,8 +19,12 @@ public class GestorDeNivelesIA : MonoBehaviour
             return;
         }
 
-        int nivel = GameLevelManager.instance.nivelActual;
-        IniciarNivel(nivel);
+        // COMENTAMOS LA LÓGICA ANTIGUA
+        // int nivel = GameLevelManager.instance.nivelActual;
+        // IniciarNivel(nivel);
+
+        // AÑADIMOS ESTE MENSAJE
+        Debug.Log("[GestorDeNivelesIA] Listo. Esperando orden del GameManagerTejo para iniciar nivel.");
     }
 
     public void IniciarNivel(int nivel)
@@ -30,35 +34,34 @@ public class GestorDeNivelesIA : MonoBehaviour
             ia.gameObject.SetActive(false);
 
         AIController iaSeleccionada = null;
+
+        // Obtenemos la dificultad primero
         PersonajeIAData datosIA = GameLevelManager.instance.ObtenerDatosIA();
 
-        //  Selección basada en nombre (nivel actual define el personaje)
-        if (datosIA.nombre == "Estefa")
+        // Seleccionar la IA correspondiente
+        if (nivel == 0) // El tutorial siempre es Estefa
         {
             iaSeleccionada = estefa;
         }
         else
         {
-            iaSeleccionada = todasLasIAs.Find(ia => ia.name.Contains(datosIA.nombre));
-
-            if (iaSeleccionada == null)
-                iaSeleccionada = ObtenerIAAleatoria(new List<AIController> { estefa });
+            // ¡LÓGICA ALEATORIA!
+            // Obtenemos una IA aleatoria que NO sea Estefa
+            iaSeleccionada = ObtenerIAAleatoria(new List<AIController> { estefa });
         }
 
-        //  Activar y configurar
+        // Activar IA y registrar
         if (iaSeleccionada != null)
         {
             iaSeleccionada.gameObject.SetActive(true);
             if (!iasUsadas.Contains(iaSeleccionada))
                 iasUsadas.Add(iaSeleccionada);
 
-            // Aplicar los datos del GameLevelManager
+            // Aplicar la dificultad
             iaSeleccionada.AplicarDatosIA(datosIA);
 
-            //  DEBUG INFORMATIVO COMPLETO
-            Debug.Log($" IA configurada correctamente  " +
-                      $"Personaje: {datosIA.nombre} | Nivel: {nivel} | Dificultad: {datosIA.dificultad} | " +
-                      $"Fallo: {datosIA.chanceFallar} | Delay: {datosIA.decisionDelay}s");
+            // Actualizamos el log para mostrar el nombre real de la IA
+            Debug.Log($" Personaje IA: {iaSeleccionada.name} | Nivel: {nivel} | Dificultad: {datosIA.dificultad}");
         }
         else
         {

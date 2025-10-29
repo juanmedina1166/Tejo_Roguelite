@@ -46,15 +46,17 @@ public class GameLevelManager : MonoBehaviour
         }
     }
 
-    private DificultadIA DeterminarDificultadSegunNivel(int nivel)
+    public DificultadIA DeterminarDificultadSegunNivel(int nivel)
     {
         switch (nivel)
         {
-            case 0: return DificultadIA.Facil; // Tutorial
-            case 1: return DificultadIA.Facil;
-            case 2: return (Random.value < 0.5f) ? DificultadIA.Facil : DificultadIA.Media;
-            case 3: return DificultadIA.Media;
-            case 4: return (Random.value < 0.5f) ? DificultadIA.Media : DificultadIA.Dificil;
+            case 0: return DificultadIA.Facil;   // Tutorial
+            case 1: return DificultadIA.Facil;   // Partida 1 (Nivel 1)
+            case 2: return DificultadIA.Media;   // Partida 2 (Nivel 2)
+            case 3: return DificultadIA.Dificil; // Partida 3 (Nivel 3)
+
+            // Dejamos los otros por si decides alargar más la run
+            case 4: return DificultadIA.Dificil;
             case 5: return DificultadIA.Dificil;
             default: return DificultadIA.Facil;
         }
@@ -126,4 +128,5 @@ public class GameLevelManager : MonoBehaviour
         // Asegúrate de que tu escena de menú se llame "Menu"
         SceneManager.LoadScene("Menu Principal");
     }
+
 }
