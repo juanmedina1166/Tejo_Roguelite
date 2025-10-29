@@ -19,7 +19,6 @@ public class GestorDeNivelesIA : MonoBehaviour
             return;
         }
 
-        // Usamos el nivel actual definido por GameLevelManager
         int nivel = GameLevelManager.instance.nivelActual;
         IniciarNivel(nivel);
     }
@@ -33,7 +32,7 @@ public class GestorDeNivelesIA : MonoBehaviour
         AIController iaSeleccionada = null;
         PersonajeIAData datosIA = GameLevelManager.instance.ObtenerDatosIA();
 
-        // Seleccionar la IA correspondiente al personaje actual
+        //  Selección basada en nombre (nivel actual define el personaje)
         if (datosIA.nombre == "Estefa")
         {
             iaSeleccionada = estefa;
@@ -42,22 +41,24 @@ public class GestorDeNivelesIA : MonoBehaviour
         {
             iaSeleccionada = todasLasIAs.Find(ia => ia.name.Contains(datosIA.nombre));
 
-            // Si no se encuentra, usar una aleatoria como respaldo
             if (iaSeleccionada == null)
                 iaSeleccionada = ObtenerIAAleatoria(new List<AIController> { estefa });
         }
 
-        // Activar IA y registrar
+        //  Activar y configurar
         if (iaSeleccionada != null)
         {
             iaSeleccionada.gameObject.SetActive(true);
             if (!iasUsadas.Contains(iaSeleccionada))
                 iasUsadas.Add(iaSeleccionada);
 
-            // Aplicar la dificultad
-            iaSeleccionada.ConfigurarDificultad(datosIA.dificultad.ToString());
+            // Aplicar los datos del GameLevelManager
+            iaSeleccionada.AplicarDatosIA(datosIA);
 
-            Debug.Log($" Personaje IA: {datosIA.nombre} | Nivel: {nivel} | Dificultad: {datosIA.dificultad}");
+            //  DEBUG INFORMATIVO COMPLETO
+            Debug.Log($" IA configurada correctamente  " +
+                      $"Personaje: {datosIA.nombre} | Nivel: {nivel} | Dificultad: {datosIA.dificultad} | " +
+                      $"Fallo: {datosIA.chanceFallar} | Delay: {datosIA.decisionDelay}s");
         }
         else
         {

@@ -44,15 +44,32 @@ public class AIController : MonoBehaviour
 
     void Start()
     {
-        PersonajeIAData datos = GameLevelManager.instance.ObtenerDatosIA();
+        // Ya no se configura solo, porque los datos vienen desde GestorDeNivelesIA
+        Debug.Log("[IAController] Esperando datos de configuración del GestorDeNivelesIA...");
+    }
 
+    public void AplicarDatosIA(PersonajeIAData datos)
+    {
+        if (datos == null)
+        {
+            Debug.LogError("[AIController]  Datos IA nulos, no se pudo configurar.");
+            return;
+        }
+
+        // Asignar parámetros desde los datos
         chanceFallar = datos.chanceFallar;
         decisionDelay = datos.decisionDelay;
         rangoFuerzaPercent = datos.rangoFuerza;
         missFactorMin = datos.missFactor.x;
         missFactorMax = datos.missFactor.y;
 
-        Debug.Log($"[IA] Iniciado personaje: {datos.nombre} ({datos.dificultad})");
+        Debug.Log(
+            $"[AIController]  Configurada como {datos.nombre} ({datos.dificultad})\n" +
+            $"• Fallo: {chanceFallar:P0}\n" +
+            $"• Delay: {decisionDelay:F2}s\n" +
+            $"• Rango de fuerza: {rangoFuerzaPercent.x:F2} - {rangoFuerzaPercent.y:F2}\n" +
+            $"• Miss factor: {missFactorMin:F2} - {missFactorMax:F2}"
+        );
     }
 
     void RebuildActiveList()
