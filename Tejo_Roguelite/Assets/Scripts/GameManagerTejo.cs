@@ -268,6 +268,12 @@ public class GameManagerTejo : MonoBehaviour
 
     public void TejoTermino(Tejo tejo)
     {
+        if (tejo == null || tejo.haTerminado)
+        {
+            // Si ya fue procesado, no hagas nada.
+            return;
+        }
+        tejo.haTerminado = true;
         Debug.Log($"[DEBUG] ¡TejoTermino llamado por {tejo.gameObject.name}!");
         if (HabilidadManager.instance.imanBocinActivo)
         {
@@ -277,7 +283,6 @@ public class GameManagerTejo : MonoBehaviour
             Habilidad iman = HabilidadManager.instance.GetHabilidad("Imán de Bocín");
             if (iman != null) HabilidadManager.instance.QuitarHabilidad(iman);
         }
-        bumeranExitoso = false; // Reseteamos la bandera de bumerán
         tejosDeLaRonda.Add(tejo);
         Debug.Log($"El tejo de {TurnManager.instance.CurrentTurn()} se ha detenido.");
         // 1. Comprobar dónde aterrizó el tejo
@@ -379,7 +384,7 @@ public class GameManagerTejo : MonoBehaviour
             // Si falló el tiro (misma condición de antes)
             if (!scoreOcurrido && !estaEmbocinado)
             {
-                Habilidad bumeran = HabilidadManager.instance.GetHabilidad("El Tejo Bumerán");
+                Habilidad bumeran = HabilidadManager.instance.GetHabilidad("Tejo Bumeran");
                 if (bumeran != null)
                 {
                     // Leemos la probabilidad (valor1) del asset

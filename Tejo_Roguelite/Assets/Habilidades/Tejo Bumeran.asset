@@ -16,6 +16,7 @@ MonoBehaviour:
   descripcion: Si fallas la cancha, tienes un 25% de probabilidad de que el tejo
     regrese a tu mano para un segundo intento.
   icono: {fileID: 0}
+  fondo: {fileID: 0}
   trigger: 0
-  valorNumerico1: 25
+  valorNumerico1: 100
   valorNumerico2: 0
