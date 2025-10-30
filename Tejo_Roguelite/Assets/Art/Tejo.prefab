@@ -102,6 +102,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d752bde81f327e44ab1a568bab3aa72a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  jugadorID: 0
+  puedeLanzar: 0
+  haTocadoMecha: 0
 --- !u!114 &9156205940234380085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,6 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4ec6b1575e936d4f89b4f3fc8a9bb94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxLaunchSpeed: 60
 --- !u!54 &4955746103245259963
 Rigidbody:
   m_ObjectHideFlags: 0

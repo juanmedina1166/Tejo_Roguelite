@@ -6,7 +6,7 @@ public class Tejo : MonoBehaviour
 {
     private Rigidbody rb;
     private bool fueLanzado = false;
-    private bool haTerminado = false;
+    public bool haTerminado = false;
     public int jugadorID;
     public bool puedeLanzar = false;
     public bool haTocadoMecha = false;

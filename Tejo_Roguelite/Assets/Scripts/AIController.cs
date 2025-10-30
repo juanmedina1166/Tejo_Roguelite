@@ -128,6 +128,13 @@ public class AIController : MonoBehaviour
         lanzando = true;
         yield return new WaitForSeconds(decisionDelay);
 
+        if (tejoPrefab == null)
+        {
+            Debug.LogError($"[IA ERROR] {this.name} no puede lanzar porque 'tejoPrefab' ESTÁ NULO.");
+            lanzando = false;
+            yield break;
+        }
+
         if (tejoPrefab == null || puntoDeLanzamiento == null)
         {
             lanzando = false;
