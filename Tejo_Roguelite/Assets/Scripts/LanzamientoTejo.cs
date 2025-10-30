@@ -128,26 +128,7 @@ public class LanzamientoTejo : MonoBehaviour
 
         // --- Lógica de "Imán de Bocín" ---
         Habilidad iman = HabilidadManager.instance.GetHabilidad("Iman del Bocin");
-        if (tejoComponent != null && tejoComponent.jugadorID == 0 && Time.frameCount % 60 == 0) // Loguea solo para el jugador, una vez por segundo
-        {
-            // 1. ¿Está la habilidad activa?
-            if (!HabilidadManager.instance.imanBocinActivo)
-            {
-                Debug.LogWarning("[Iman Check] El FixedUpdate funciona, PERO 'imanBocinActivo' es FALSO. ¿Activaste la habilidad?");
-            }
-
-            // 2. ¿Se encontró la habilidad?
-            if (iman == null)
-            {
-                Debug.LogError("[Iman Check] El FixedUpdate funciona, PERO 'iman' es NULL. El nombre 'Iman del Bocin' en el código NO COINCIDE con el nombre en tu asset.");
-            }
-
-            // 3. ¿Está el bocín asignado?
-            if (bocinTransform == null)
-            {
-                Debug.LogError("[Iman Check] El FixedUpdate funciona, PERO 'bocinTransform' es NULL. Revisa la referencia 'Bocin' en el GameManagerTejo.");
-            }
-        }
+        
         if (HabilidadManager.instance.imanBocinActivo && iman != null)
         {
             if (bocinTransform != null)
