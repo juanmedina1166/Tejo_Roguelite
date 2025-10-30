@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: HabilidadDatabase
   m_EditorClassIdentifier: 
   todasLasHabilidades:
-  - {fileID: 11400000, guid: 0ef8f31a5d367c84b850b4184e4c7855, type: 2}
   - {fileID: 11400000, guid: fb1af51ead6c3854ba54721f3ea034a1, type: 2}
   - {fileID: 11400000, guid: d54b217d4e2442541a3d4b7cf8ec7cc3, type: 2}
   - {fileID: 11400000, guid: cf58ee5fd6f656d49be3f1a7a8803e2f, type: 2}
@@ -21,6 +20,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cec114e8480f7c54e8c1ee4144f7c6f9, type: 2}
   - {fileID: 11400000, guid: c324270a25d057b49b75abb35d4d4e84, type: 2}
   - {fileID: 11400000, guid: a892fddb5b02d8f4fa422c758f678712, type: 2}
-  - {fileID: 11400000, guid: 734d39b2db388cb45ab9adceb56553cd, type: 2}
   - {fileID: 11400000, guid: c5a914a0cbeb5cf45b891e82f3980908, type: 2}
   - {fileID: 11400000, guid: e4f6db956d3a2144e81a0c2796de842f, type: 2}
+  - {fileID: 11400000, guid: 2742f1f165bb9a2419103e43d66fd5e7, type: 2}

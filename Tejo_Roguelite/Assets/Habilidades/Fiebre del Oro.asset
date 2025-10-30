@@ -16,6 +16,7 @@ MonoBehaviour:
   descripcion: "Tomas un \"shot\". Tu pr\xF3ximo lanzamiento tiene potencia y precisi\xF3n
     aumentadas, pero la pantalla se tambalea ligeramente.\r"
   icono: {fileID: 0}
+  fondo: {fileID: 0}
   trigger: 0
-  valorNumerico1: 0.7
-  valorNumerico2: 0.5
+  valorNumerico1: 3
+  valorNumerico2: 2

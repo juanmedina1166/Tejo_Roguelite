@@ -311,7 +311,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   estadoActual: 0
   puntajes: 0000000000000000
-  puntajeMaximo: 10
+  puntajeMaximo: 21
   puntajeTextos:
   - {fileID: 42698478}
   - {fileID: 863880391}
@@ -3535,7 +3535,7 @@ MonoBehaviour:
   multiplicadorDeFuerza: 60
   velocidadBarra: 1
   maxDesviacionAngular: 10
-  alturaDelArco: 0.4
+  alturaDelArco: 0.6
   powerGradient:
     serializedVersion: 2
     key0: {r: 1, g: 0.089728706, b: 0, a: 1}
@@ -5028,13 +5028,17 @@ PrefabInstance:
       propertyPath: m_Center.z
       value: -6.0980487
       objectReference: {fileID: 0}
+    - target: {fileID: 2954817788964510053, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.00161
+      objectReference: {fileID: 0}
     - target: {fileID: 3173047229538947855, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Size.z
-      value: 7.1210976
+      value: 7.566292
       objectReference: {fileID: 0}
     - target: {fileID: 3173047229538947855, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Center.z
-      value: 6.056639
+      value: 5.834044
       objectReference: {fileID: 0}
     - target: {fileID: 3711807732785436581, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Name
@@ -5082,19 +5086,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5312591344805881954, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Size.x
-      value: 5.711674
+      value: 6.042669
       objectReference: {fileID: 0}
     - target: {fileID: 5312591344805881954, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Center.x
-      value: -5.5064445
+      value: -5.3409476
       objectReference: {fileID: 0}
     - target: {fileID: 5312591344805881954, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Center.y
-      value: 0.00005078811
+      value: 0.000047829002
       objectReference: {fileID: 0}
     - target: {fileID: 5312591344805881954, guid: 3995a07a261e713488ab2ca82a425a91, type: 3}
       propertyPath: m_Center.z
-      value: -0.203604
+      value: -0.20360401
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
