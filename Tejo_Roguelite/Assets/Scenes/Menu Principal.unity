@@ -4964,7 +4964,7 @@ GameObject:
   - component: {fileID: 1494362422}
   - component: {fileID: 1494362425}
   m_Layer: 5
-  m_Name: Aguardiente Doble Filo
+  m_Name: Ultima Chance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5085,7 +5085,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33512fbcafe764f4faa2ced59b413da5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nombreHabilidad: Aguardiente Doble Filo
+  nombreHabilidad: Ultima Chance
   costoDesbloqueo: 10
   costoMejora1: 200
   costoMejora2: 400
@@ -5150,7 +5150,7 @@ GameObject:
   - component: {fileID: 1533964176}
   - component: {fileID: 1533964179}
   m_Layer: 5
-  m_Name: Partido a machete
+  m_Name: Amaneciste con suerte
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5271,7 +5271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33512fbcafe764f4faa2ced59b413da5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nombreHabilidad: Partido a machete
+  nombreHabilidad: Amaneciste con suerte
   costoDesbloqueo: 100
   costoMejora1: 200
   costoMejora2: 400
@@ -6498,7 +6498,7 @@ GameObject:
   - component: {fileID: 2112448020}
   - component: {fileID: 2112448023}
   m_Layer: 5
-  m_Name: Tejo Ligero
+  m_Name: "La mo\xF1ona va con toda"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6619,7 +6619,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33512fbcafe764f4faa2ced59b413da5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nombreHabilidad: Tejo Ligero
+  nombreHabilidad: "La mo\xF1ona va con toda"
   costoDesbloqueo: 100
   costoMejora1: 200
   costoMejora2: 400
