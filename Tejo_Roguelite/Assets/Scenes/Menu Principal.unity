@@ -572,9 +572,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: "El Tejo Bumer\xE1n"
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 200
+  costoMejora1: 500
+  costoMejora2: 1500
   botonComprar: {fileID: 1494362422}
   textoCosto: {fileID: 458627271}
   tiendaUI: {fileID: 412973770}
@@ -2837,9 +2837,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: "Im\xE1n de Boc\xEDn"
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 200
+  costoMejora1: 500
+  costoMejora2: 1500
   botonComprar: {fileID: 881032413}
   textoCosto: {fileID: 2128603075}
   tiendaUI: {fileID: 412973770}
@@ -3827,9 +3827,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: Mecha Vengativa
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 200
+  costoMejora1: 500
+  costoMejora2: 2000
   botonComprar: {fileID: 1281063222}
   textoCosto: {fileID: 1128537293}
   tiendaUI: {fileID: 412973770}
@@ -3969,9 +3969,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: El Mano
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 200
+  costoMejora1: 500
+  costoMejora2: 1500
   botonComprar: {fileID: 1282947567}
   textoCosto: {fileID: 1946120429}
   tiendaUI: {fileID: 412973770}
@@ -4670,9 +4670,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: Ultima Chance
-  costoDesbloqueo: 10
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 400
+  costoMejora1: 900
+  costoMejora2: 2000
   botonComprar: {fileID: 1494362422}
   textoCosto: {fileID: 863307462}
   tiendaUI: {fileID: 412973770}
@@ -4856,9 +4856,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: Amaneciste con suerte
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 200
+  costoMejora1: 500
+  costoMejora2: 1500
   botonComprar: {fileID: 1533964176}
   textoCosto: {fileID: 2085502051}
   tiendaUI: {fileID: 412973770}
@@ -5240,9 +5240,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: Falsa Alarma
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 400
+  costoMejora1: 800
+  costoMejora2: 2000
   botonComprar: {fileID: 1779018404}
   textoCosto: {fileID: 267803157}
   tiendaUI: {fileID: 412973770}
@@ -5518,9 +5518,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: Fiebre del Oro
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 300
+  costoMejora1: 700
+  costoMejora2: 1800
   botonComprar: {fileID: 1846669138}
   textoCosto: {fileID: 648970101}
   tiendaUI: {fileID: 412973770}
@@ -6068,9 +6068,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nombreHabilidad: "La mo\xF1ona va con toda"
-  costoDesbloqueo: 100
-  costoMejora1: 200
-  costoMejora2: 400
+  costoDesbloqueo: 200
+  costoMejora1: 500
+  costoMejora2: 1700
   botonComprar: {fileID: 2112448020}
   textoCosto: {fileID: 654296738}
   tiendaUI: {fileID: 412973770}
