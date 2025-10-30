@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 public class MetaProgressionManager : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class MetaProgressionManager : MonoBehaviour
     [SerializeField] private int factorVictoria = 10;
     [SerializeField] private int factorDerrota = 1;
 
-    //  Nuevo evento
+    // Evento para notificar a la UI
     public event Action OnDineroCambiado;
 
     private void Awake()
@@ -34,7 +35,6 @@ public class MetaProgressionManager : MonoBehaviour
         dineroTotal += dineroGanado;
         GuardarProgreso();
 
-        //  Notificar a la tienda o HUD
         OnDineroCambiado?.Invoke();
 
         string resultado = gano ? "victoria" : "derrota";
@@ -45,8 +45,6 @@ public class MetaProgressionManager : MonoBehaviour
     {
         dineroTotal = Mathf.Max(0, dineroTotal - cantidad);
         GuardarProgreso();
-
-        //  Notificar cambio
         OnDineroCambiado?.Invoke();
     }
 
@@ -61,12 +59,42 @@ public class MetaProgressionManager : MonoBehaviour
         dineroTotal = PlayerPrefs.GetInt("DineroTotal", 0);
     }
 
+    //  Nueva versión extendida
     public void ReiniciarProgreso()
     {
+        // Reiniciar dinero
         dineroTotal = 0;
         PlayerPrefs.DeleteKey("DineroTotal");
 
-        //  Notificar cambio
+        // Eliminar progreso de habilidades
+        foreach (var key in PlayerPrefsKeysConPrefijo("Habilidad_"))
+        {
+            PlayerPrefs.DeleteKey(key);
+        }
+
+        PlayerPrefs.Save();
+
+        // Notificar cambio
         OnDineroCambiado?.Invoke();
+
+        Debug.Log(" Todo el progreso (dinero y habilidades) ha sido reiniciado.");
+    }
+
+    //  Helper: busca todas las claves que empiecen con un prefijo
+    private List<string> PlayerPrefsKeysConPrefijo(string prefijo)
+    {
+        List<string> keys = new List<string>();
+
+        // Lista de habilidades que usas en la tienda
+        string[] habilidades = { "Salto", "Velocidad", "Escudo", "Fuerza" }; // cámbialas según tus nombres reales
+
+        foreach (string habilidad in habilidades)
+        {
+            string key = "Habilidad_" + habilidad + "_Nivel";
+            if (PlayerPrefs.HasKey(key))
+                keys.Add(key);
+        }
+
+        return keys;
     }
 }
