@@ -18,6 +18,7 @@ MonoBehaviour:
 
 '
   icono: {fileID: 0}
+  fondo: {fileID: 0}
   trigger: 0
-  valorNumerico1: 70
+  valorNumerico1: 20
   valorNumerico2: 1

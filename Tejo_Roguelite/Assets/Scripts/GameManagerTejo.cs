@@ -312,6 +312,7 @@ public class GameManagerTejo : MonoBehaviour
         {
             Debug.Log($"¡¡MOÑONA para Jugador {idJugadorActual + 1}!!");
             SumarPuntos(idJugadorActual, 9);
+            GameEvents.TriggerMoñonaScored(idJugadorActual);
             scoreOcurrido = true;
             // Los puntos extra de habilidades (como Mecha Explosiva) ya se sumaron
             // gracias al HabilidadManager cuando la mecha explotó.
@@ -428,9 +429,9 @@ public class GameManagerTejo : MonoBehaviour
             Debug.Log("Bumerán: Devolviendo tejo al jugador.");
             bumeranExitoso = false;
             CrearTejoJugador();
-            if (blocker != null) blocker.SetActive(false); // Desbloquear input
+            if (blocker != null) blocker.SetActive(false);
         }
-        // Si tenemos un tiro extra (Amaneciste con suerte) y es el jugador 0
+        // PROBLEMA 2: TIRO EXTRA (debe ser else if)
         else if (tirosExtraEsteTurno > 0 && TurnManager.instance.CurrentPlayerIndex() == 0)
         {
             Debug.Log("Usando tiro extra (Amaneciste con suerte).");
@@ -438,9 +439,9 @@ public class GameManagerTejo : MonoBehaviour
             CrearTejoJugador();
             if (blocker != null) blocker.SetActive(false);
         }
+        // PROBLEMA 3: PASAR TURNO (solo si no pasó nada de lo anterior)
         else
         {
-            // Después de la pausa, le decimos al TurnManager que es el turno del siguiente.
             if (TurnManager.instance != null)
             {
                 TurnManager.instance.NextTurn();
@@ -687,7 +688,7 @@ public class GameManagerTejo : MonoBehaviour
 
         // 6. Mover la lógica de "Amaneciste con suerte" aquí
         tirosExtraEsteTurno = 0; // Reseteamos por si acaso
-        Habilidad hab = HabilidadManager.instance.GetHabilidad("Amaneciste con suerte");
+        Habilidad hab = HabilidadManager.instance.GetHabilidad("Amaneciste con Suerte");
         if (hab != null)
         {
             // Leemos la probabilidad (valor1) del asset

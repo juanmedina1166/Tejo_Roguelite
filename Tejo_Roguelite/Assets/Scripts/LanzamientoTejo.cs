@@ -11,7 +11,8 @@ public class LanzamientoTejo : MonoBehaviour
     [SerializeField] private float maxLaunchSpeed = 40f;
     private Transform bocinTransform;
     private Tejo tejoComponent;
-    private bool haSplitteado = false;
+    // --- LÍNEA ELIMINADA ---
+    // private bool haSplitteado = false; (Ya no se usa)
 
     void Awake()
     {
@@ -115,7 +116,7 @@ public class LanzamientoTejo : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
 
         // Sleep + WakeUp inmediato para intentar dejar el cuerpo limpio
-        rb.Sleep();
+        // rb.Sleep(); // <-- ¡LÍNEA ELIMINADA! Esta era la causa del error.
         rb.WakeUp();
 
         Debug.Log($" [ResetearFisica] Después del reset: Vel={rb.linearVelocity.magnitude:F2}, Kinematic={rb.isKinematic}, Gravity={rb.useGravity}");
@@ -126,7 +127,27 @@ public class LanzamientoTejo : MonoBehaviour
         if (rb == null || !rb.useGravity || rb.IsSleeping()) return;
 
         // --- Lógica de "Imán de Bocín" ---
-        Habilidad iman = HabilidadManager.instance.GetHabilidad("Imán de Bocín");
+        Habilidad iman = HabilidadManager.instance.GetHabilidad("Iman del Bocin");
+        if (tejoComponent != null && tejoComponent.jugadorID == 0 && Time.frameCount % 60 == 0) // Loguea solo para el jugador, una vez por segundo
+        {
+            // 1. ¿Está la habilidad activa?
+            if (!HabilidadManager.instance.imanBocinActivo)
+            {
+                Debug.LogWarning("[Iman Check] El FixedUpdate funciona, PERO 'imanBocinActivo' es FALSO. ¿Activaste la habilidad?");
+            }
+
+            // 2. ¿Se encontró la habilidad?
+            if (iman == null)
+            {
+                Debug.LogError("[Iman Check] El FixedUpdate funciona, PERO 'iman' es NULL. El nombre 'Iman del Bocin' en el código NO COINCIDE con el nombre en tu asset.");
+            }
+
+            // 3. ¿Está el bocín asignado?
+            if (bocinTransform == null)
+            {
+                Debug.LogError("[Iman Check] El FixedUpdate funciona, PERO 'bocinTransform' es NULL. Revisa la referencia 'Bocin' en el GameManagerTejo.");
+            }
+        }
         if (HabilidadManager.instance.imanBocinActivo && iman != null)
         {
             if (bocinTransform != null)
@@ -146,50 +167,14 @@ public class LanzamientoTejo : MonoBehaviour
                 }
             }
         }
-        // --- Lógica de "Partido a machete" ---
-        Habilidad machete = HabilidadManager.instance.GetHabilidad("Partido a machete");
-        if (!haSplitteado && tejoComponent != null && tejoComponent.jugadorID == 0 && machete != null)
-        {
-            if (rb.linearVelocity.y < 0.1f && rb.linearVelocity.y > -0.1f && transform.position.y > 1f)
-            {
-                haSplitteado = true;
-                SplitTejo(machete); // Pasamos la habilidad al método
-            }
-        }
+
+        // --- LÓGICA ELIMINADA ---
+        // (Toda la lógica de "Partido a machete" fue eliminada de aquí)
     }
-    private void SplitTejo(Habilidad habilidadMachete)
-    {
-        Debug.Log("¡HABILIDAD: Partido a machete! Dividiendo el tejo.");
 
-        // Creamos el segundo tejo (una copia de este)
-        GameObject tejo2_GO = Instantiate(gameObject, transform.position, transform.rotation);
-        Tejo tejo2_Comp = tejo2_GO.GetComponent<Tejo>();
-        LanzamientoTejo tejo2_Lanz = tejo2_GO.GetComponent<LanzamientoTejo>();
-        Rigidbody rb2 = tejo2_GO.GetComponent<Rigidbody>();
-
-        // Marcamos el segundo tejo para que no se divida de nuevo
-        tejo2_Lanz.haSplitteado = true;
-
-        // Hacemos ambos más pequeños y ligeros
-        float escala = habilidadMachete.valorNumerico2;
-        float fuerzaSplit = habilidadMachete.valorNumerico1;
-
-        transform.localScale *= escala;
-        rb.mass *= escala;
-        tejo2_GO.transform.localScale *= escala;
-        rb2.mass *= escala;
-
-        Vector3 vel1 = rb.linearVelocity + (transform.right * fuerzaSplit);
-        Vector3 vel2 = rb.linearVelocity + (-transform.right * fuerzaSplit);
-
-        rb.linearVelocity = vel1;
-        rb2.linearVelocity = vel2;
-
-        // El GameManager ya se encarga de registrar ambos tejos
-        // y calculará "mano" con el que quede más cerca.
-        // Y si CUALQUIERA golpea una mecha, `MarcarMechaExplotada` se llamará,
-        // anulando el punto de mano, tal como dice la habilidad.
-    }
+    // --- MÉTODO ELIMINADO ---
+    // private void SplitTejo(Habilidad habilidadMachete)
+    // (El método completo fue eliminado)
 
     private void OnDestroy()
     {
@@ -197,5 +182,3 @@ public class LanzamientoTejo : MonoBehaviour
             Debug.Log($" [Destroy] Tejo destruido. Última Vel={rb.linearVelocity.magnitude:F2}");
     }
 }
-
-

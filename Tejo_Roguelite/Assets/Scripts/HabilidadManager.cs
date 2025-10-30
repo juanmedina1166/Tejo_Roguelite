@@ -214,7 +214,7 @@ public class HabilidadManager : MonoBehaviour
             case "Aguardiente Doble Filo":
                 aguardienteActivo = true;
                 break;
-            case "Imán de Bocín":
+            case "Iman del Bocin":
                 imanBocinActivo = true;
                 break;
             case "Tejo Ligero":

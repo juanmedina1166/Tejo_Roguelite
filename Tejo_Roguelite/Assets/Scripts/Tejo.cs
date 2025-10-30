@@ -40,7 +40,6 @@ public class Tejo : MonoBehaviour
         // Si el tejo se detuvo (está dormido)
         if (rb.IsSleeping())
         {
-            haTerminado = true;
             Debug.Log("El tejo se ha detenido en la posición: " + transform.position);
 
             if (GameManagerTejo.instance != null)
