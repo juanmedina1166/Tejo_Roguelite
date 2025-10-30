@@ -311,7 +311,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   estadoActual: 0
   puntajes: 0000000000000000
-  puntajeMaximo: 5
+  puntajeMaximo: 10
   puntajeTextos:
   - {fileID: 42698478}
   - {fileID: 863880391}
@@ -336,6 +336,7 @@ MonoBehaviour:
     m_Bits: 64
   alturaSobreElSuelo: 0.1
   radioZonaMuerta: 2
+  gestorIA: {fileID: 1342874415}
 --- !u!4 &18470584
 Transform:
   m_ObjectHideFlags: 0
@@ -532,7 +533,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tejoPrefab: {fileID: 9156205940234380085, guid: f6643ff1215e83440a36b9de5d7e717c, type: 3}
   puntoDeLanzamiento: {fileID: 362065680}
-  objetivoPrincipal: {fileID: 0}
+  objetivoPrincipal: {fileID: 1444986090}
   objetivos:
   - {fileID: 0}
   - {fileID: 0}
@@ -544,6 +545,7 @@ MonoBehaviour:
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
   chanceFallar: 0
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &61899312
@@ -1412,7 +1414,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tejoPrefab: {fileID: 9156205940234380085, guid: f6643ff1215e83440a36b9de5d7e717c, type: 3}
   puntoDeLanzamiento: {fileID: 362065680}
-  objetivoPrincipal: {fileID: 0}
+  objetivoPrincipal: {fileID: 1444986090}
   objetivos:
   - {fileID: 0}
   - {fileID: 0}
@@ -1424,6 +1426,7 @@ MonoBehaviour:
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
   chanceFallar: 0
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &456385003
@@ -1472,7 +1475,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tejoPrefab: {fileID: 9156205940234380085, guid: f6643ff1215e83440a36b9de5d7e717c, type: 3}
   puntoDeLanzamiento: {fileID: 362065680}
-  objetivoPrincipal: {fileID: 0}
+  objetivoPrincipal: {fileID: 1444986090}
   objetivos:
   - {fileID: 0}
   - {fileID: 0}
@@ -1484,6 +1487,7 @@ MonoBehaviour:
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
   chanceFallar: 0
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &471183701
@@ -2277,7 +2281,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tejoPrefab: {fileID: 9156205940234380085, guid: f6643ff1215e83440a36b9de5d7e717c, type: 3}
   puntoDeLanzamiento: {fileID: 362065680}
-  objetivoPrincipal: {fileID: 0}
+  objetivoPrincipal: {fileID: 1444986090}
   objetivos:
   - {fileID: 0}
   - {fileID: 0}
@@ -2289,6 +2293,7 @@ MonoBehaviour:
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
   chanceFallar: 0
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &899726838
@@ -3787,7 +3792,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tejoPrefab: {fileID: 9156205940234380085, guid: f6643ff1215e83440a36b9de5d7e717c, type: 3}
   puntoDeLanzamiento: {fileID: 362065680}
-  objetivoPrincipal: {fileID: 0}
+  objetivoPrincipal: {fileID: 1444986090}
   objetivos:
   - {fileID: 0}
   - {fileID: 0}
@@ -3799,6 +3804,7 @@ MonoBehaviour:
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
   chanceFallar: 0
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &1493350959
@@ -3858,7 +3864,8 @@ MonoBehaviour:
   alturaExtra: 10
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
-  chanceFallar: 0
+  chanceFallar: 0.252
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &1613470160
@@ -4238,7 +4245,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tejoPrefab: {fileID: 9156205940234380085, guid: f6643ff1215e83440a36b9de5d7e717c, type: 3}
   puntoDeLanzamiento: {fileID: 362065680}
-  objetivoPrincipal: {fileID: 0}
+  objetivoPrincipal: {fileID: 1444986090}
   objetivos:
   - {fileID: 0}
   - {fileID: 0}
@@ -4250,6 +4257,7 @@ MonoBehaviour:
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
   chanceFallar: 0
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &1769862118
@@ -4719,7 +4727,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tejoPrefab: {fileID: 9156205940234380085, guid: f6643ff1215e83440a36b9de5d7e717c, type: 3}
   puntoDeLanzamiento: {fileID: 362065680}
-  objetivoPrincipal: {fileID: 0}
+  objetivoPrincipal: {fileID: 1444986090}
   objetivos:
   - {fileID: 0}
   - {fileID: 0}
@@ -4731,6 +4739,7 @@ MonoBehaviour:
   rangoFuerzaPercent: {x: 0.6, y: 2}
   decisionDelay: 1
   chanceFallar: 0
+  chanceApuntarBocin: 0.25
   missFactorMin: 1.2
   missFactorMax: 2
 --- !u!4 &1935686547
@@ -4778,7 +4787,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nivelActual: 0
-  nivelesParaGanarRun: 3
+  nivelesParaGanarRun: 4
   pantallaVictoriaDelRun: {fileID: 643383279}
   pantallaDerrotaDelRun: {fileID: 1304135363}
 --- !u!4 &1957143516

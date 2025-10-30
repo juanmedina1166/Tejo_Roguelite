@@ -89,6 +89,9 @@ public class GameManagerTejo : MonoBehaviour
     [Tooltip("El radio alrededor del bocín donde NO aparecerán mechas")]
     [SerializeField] private float radioZonaMuerta = 1.5f;
 
+    [Header("Gestión de IA")]
+    [SerializeField] private GestorDeNivelesIA gestorIA;
+
     private void Awake()
     {
         if (instance == null) instance = this;
@@ -636,6 +639,17 @@ public class GameManagerTejo : MonoBehaviour
     {
         Debug.Log("Reiniciando el juego para una nueva partida...");
 
+        if (gestorIA != null)
+        {
+            // Obtenemos el nivel actual. Si el jugador acaba de ganar,
+            // TerminarPartida() ya debería haberlo incrementado.
+            int nivelActual = GameLevelManager.instance.nivelActual;
+            gestorIA.IniciarNivel(nivelActual);
+        }
+        else
+        {
+            Debug.LogError("¡'GestorDeNivelesIA' no está asignado en el GameManagerTejo!");
+        }
         // 1. Reiniciar puntajes y UI
         for (int i = 0; i < puntajes.Length; i++)
         {
