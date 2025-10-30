@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class MetaProgressionManager : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class MetaProgressionManager : MonoBehaviour
     public int dineroTotal = 0;
     [SerializeField] private int factorVictoria = 10;
     [SerializeField] private int factorDerrota = 1;
+
+    //  Nuevo evento
+    public event Action OnDineroCambiado;
 
     private void Awake()
     {
@@ -30,6 +34,9 @@ public class MetaProgressionManager : MonoBehaviour
         dineroTotal += dineroGanado;
         GuardarProgreso();
 
+        //  Notificar a la tienda o HUD
+        OnDineroCambiado?.Invoke();
+
         string resultado = gano ? "victoria" : "derrota";
         Debug.Log($"[{resultado.ToUpper()}] Ganaste {dineroGanado} monedas (puntaje: {puntaje}). Total actual: {dineroTotal}");
     }
@@ -38,6 +45,9 @@ public class MetaProgressionManager : MonoBehaviour
     {
         dineroTotal = Mathf.Max(0, dineroTotal - cantidad);
         GuardarProgreso();
+
+        //  Notificar cambio
+        OnDineroCambiado?.Invoke();
     }
 
     public void GuardarProgreso()
@@ -55,5 +65,8 @@ public class MetaProgressionManager : MonoBehaviour
     {
         dineroTotal = 0;
         PlayerPrefs.DeleteKey("DineroTotal");
+
+        //  Notificar cambio
+        OnDineroCambiado?.Invoke();
     }
 }
